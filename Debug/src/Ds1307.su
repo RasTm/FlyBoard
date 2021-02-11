@@ -1,0 +1,4 @@
+Ds1307.c:3:6:Ds1307_SetTime	32	static
+Ds1307.c:13:6:Ds1307_GetTime	40	static
+Ds1307.c:30:6:Ds1307_EepromWrite	48	dynamic
+Ds1307.c:44:6:Ds1307_EepromRead	16	static

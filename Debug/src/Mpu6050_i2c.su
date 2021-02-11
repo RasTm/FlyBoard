@@ -1,0 +1,9 @@
+Mpu6050_i2c.c:10:6:mpu6050_write	16	static
+Mpu6050_i2c.c:20:6:mpu6050_read	16	static
+Mpu6050_i2c.c:31:6:mpu6050_multi_read	16	static
+Mpu6050_i2c.c:41:6:mpu6050_multi_write	16	static
+Mpu6050_i2c.c:51:6:mpu6050_get_accel	32	static
+Mpu6050_i2c.c:65:6:mpu6050_get_gyro	32	static
+Mpu6050_i2c.c:77:6:mpu6050_get_temp	24	static
+Mpu6050_i2c.c:87:6:mpu6050_gyro_selftest	80	static
+Mpu6050_i2c.c:150:6:mpu6050_accel_selftest	80	static

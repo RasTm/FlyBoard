@@ -1,0 +1,6 @@
+main.c:14:6:CLK_Config	4	static
+main.c:37:6:GPIO_Config	4	static
+main.c:47:6:I2C1_Config	4	static
+main.c:55:6:TIM14_Config	4	static
+main.c:60:6:delay_us	16	static
+main.c:69:5:main	24	static

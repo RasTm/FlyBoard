@@ -1,0 +1,2 @@
+Bmp180.c:28:6:bmp_get_calib	32	static
+Bmp180.c:47:6:bmp_calc	48	static

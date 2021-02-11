@@ -1,0 +1,9 @@
+I2C.c:3:6:write_byte	24	static
+I2C.c:27:6:multi_byte_write	24	static
+I2C.c:52:6:read_byte	24	static
+I2C.c:84:6:multi_byte_read	24	static
+I2C.c:131:6:write_byte_small	24	static
+I2C.c:151:6:multi_byte_write_small	24	static
+I2C.c:175:6:read_byte_small	24	static
+I2C.c:194:6:multi_byte_read_small	32	static
+I2C.c:233:6:multi_byte_read_extend	32	static
