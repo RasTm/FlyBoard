@@ -1,0 +1,177 @@
+/*********************************************************
+ *  In The End, What Separates A Man From A Slave?       *
+ *  Money? Power? No.                                    *
+ *  A Man Chooses A Slave Obeys                          *
+ *                                          ~Andrew Ryan~*
+ *********************************************************/
+
+#include "stm32f4xx.h"
+
+#include "../Libs/RCC.hpp"
+#include "../Libs/GPIO.hpp"
+#include "../Libs/Nvic.hpp"
+#include "../Libs/USART.hpp"
+#include "../Libs/Mpu6050.hpp" oldu saol burasi debug ekrani
+#include "../Libs/Ms5611.hpp"
+
+void GPIO_init(){
+	Set_Gpio(GPIOD,12,OUTPUT,PUSH,MED,NOT,SyS);
+	Set_Gpio(GPIOD,13,OUTPUT,PUSH,MED,NOT,SyS);
+	Set_Gpio(GPIOD,14,OUTPUT,PUSH,MED,NOT,SyS);
+	Set_Gpio(GPIOD,15,OUTPUT,PUSH,MED,NOT,SyS);
+
+	Set_Gpio(GPIOA,0,INPUT,PUSH,LOW,DOWN,SyS);
+}
+void timer14_config(){
+	RCC-> APB1ENR |= 0x00000100;			//Timer14 Clock Enable
+	TIM14-> DIER  |= 0x0001;                //Update Interrupt Enable
+	TIM14-> PSC    = 83;					//Tout = ((PSC+1)+(ARR+1))/Clk_int)
+	TIM14-> ARR    = 3999;					//Tout must be 4us
+	TIM14-> CR1   |= 0x0085;                //ARPE Enable ,URS and CEN Enable
+}
+void interrupt_init(){
+	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,2);
+	Set_Interrupt(EXTI0_IRQn,1);
+	Set_Ext_Interrupt(0,GPIO_A,RISING);
+}
+
+uint8_t sayac=1, sayac2=0;
+bool mpu_tick = false;
+
+int main(void){
+	uint8_t text[]  = "Flyboard Pertinax v1.0";
+	uint8_t text2[]	=
+			"\n\r*********************************************************"
+			"\n\r*  In The End, What Separates A Man From A Slave?       *"
+			"\n\r*  Money? Power? No.                                    *"
+			"\n\r*  A Man Chooses A Slave Obeys                          *"
+			"\n\r                                           <Andrew Ryan>*"
+			"\n\r*********************************************************";
+	uint8_t clear_disp[] = "\033[2J\033[H";		//Clear Display
+	uint8_t clear_line[] = "\033[2K\r";
+	uint32_t mpu_time;
+	int32_t err[5] = {0,0,0,0,0};
+	int16_t raw_gyro[3], raw_accel[3];
+	float gyro_pitch=0, gyro_roll=0, gyro_constant=0, acc_pitch=0, acc_roll=0;
+	int32_t acc_total_vec=0;
+	bool set_gyro_angles=0;
+	float final_pitch=0, final_roll=0;
+
+	Clock_init();
+	GPIO_init();
+	timer14_config();
+
+	USART_Base Serial(USART_6,115200);
+	Serial.USART_Transmit(text2);
+	delay(1000);
+	Serial.USART_Transmit(clear_disp);
+	Serial.USART_Transmit(text);
+
+	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL2);
+	mpu.config();
+	Serial.USART_Transmit("\n\rCalibrating...");
+	mpu.calc_IMU_error(err);
+	gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);
+	Serial.USART_Transmit("\033[2K\rCalibration Done Gyro Constant = ");
+	Serial.USART_Transmit_float(gyro_constant,15);
+	delay(1000);
+	Serial.USART_Transmit(clear_line);
+	Serial.USART_Transmit("Roll\t\tPitch\n\r");
+
+	interrupt_init();
+
+	while (1){
+		if(mpu_tick == true){
+			mpu_time = TIM14-> CNT;
+			mpu.get_gyro(raw_gyro);
+			mpu.get_accel(raw_accel);
+
+			raw_gyro[0] -= err[2];
+			raw_gyro[1] -= err[3];
+			raw_gyro[2] -= err[4];
+
+			raw_accel[0] -= 100;
+			raw_accel[1] -= 45;
+			raw_accel[2] -= 1248;
+
+			gyro_pitch += raw_gyro[0] * gyro_constant;
+			gyro_roll  += raw_gyro[1] * gyro_constant;
+
+			gyro_pitch += gyro_pitch * sin(raw_gyro[2] * gyro_constant)*RAD_TO_DEG;
+			gyro_roll  -= gyro_roll  * sin(raw_gyro[2] * gyro_constant)*RAD_TO_DEG;
+
+			acc_total_vec = sqrt((raw_accel[0]*raw_accel[0])+(raw_accel[1]*raw_accel[1])+(raw_accel[2]*raw_accel[2]));
+			acc_pitch = asin((float)raw_accel[1]/acc_total_vec)* RAD_TO_DEG;
+			acc_roll  = asin((float)raw_accel[0]/acc_total_vec)*-RAD_TO_DEG;
+
+			acc_pitch -= 0;
+			acc_roll  -= 0;
+
+			if(set_gyro_angles){
+				gyro_pitch = gyro_pitch * 0.96 + acc_pitch * 0.04;
+				gyro_roll  = gyro_roll  * 0.96 + acc_roll  * 0.04;
+			}
+			else{
+				set_gyro_angles = true;
+				gyro_pitch = acc_pitch;
+				gyro_roll  = acc_roll;
+			}
+
+//			final_pitch = final_pitch * 0.8 + gyro_pitch * 0.2;
+//			final_roll  = final_roll  * 0.8 + gyro_roll  * 0.2;
+
+			final_pitch = gyro_pitch;
+			final_roll  = gyro_roll ;
+
+     		while((TIM14-> CNT - mpu_time) < 4000 && mpu_tick);
+		}
+			Serial.USART_Transmit_float(final_roll,5);
+			Serial.USART_Transmit("\t\t");
+			Serial.USART_Transmit_float(final_pitch,5);
+			Serial.USART_Transmit("\n\r");
+			sayac2++;
+			if(sayac2 == 5){
+				sayac2 = 0;
+				Serial.USART_Transmit("\033[5A\r\033[0J");
+			}
+	}
+}
+
+extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
+	if(TIM14-> SR & 0x0001){
+		TIM14-> SR = 0;
+		mpu_tick = !mpu_tick;
+		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
+	}
+}}
+
+extern "C" { void EXTI0_IRQHandler(void){
+	sayac += 1;
+	if(sayac == 2){
+		Set_Gpio_Pin(GPIOD,15,0);
+		Set_Gpio_Pin(GPIOD,14,1);
+	}
+	else if(sayac == 3){
+		Set_Gpio_Pin(GPIOD,14,0);
+		Set_Gpio_Pin(GPIOD,13,1);
+	}
+	else if(sayac == 4){
+		Set_Gpio_Pin(GPIOD,13,0);
+		Set_Gpio_Pin(GPIOD,12,1);
+	}
+	else if(sayac == 5){
+		Set_Gpio_Pin(GPIOD,12,0);
+		Set_Gpio_Pin(GPIOD,15,1);
+	}
+	else if(sayac == 6){
+		sayac = 1;
+	}
+	else if(sayac == 1){
+		Set_Gpio_Pin(GPIOD,15,0);
+		Set_Gpio_Pin(GPIOD,14,0);
+		Set_Gpio_Pin(GPIOD,13,0);
+		Set_Gpio_Pin(GPIOD,12,0);
+	}
+	Clr_Ext_Interrupt_PD(0);
+	Clr_Interrupt_PD(EXTI0_IRQn);
+}}
