@@ -30,17 +30,20 @@
 #define T_MAX 85
 #define T_REF 20
 
-class Ms5611:public I2C_Base{
+class MS5611:public I2C_Base{
 	private:
 	uint8_t d1_selection,d2_selection;		//d1 Pressure, d2 Temp
 
 	public:
-	Ms5611(I2C_TypeDef *I2Cxn, uint8_t ms_d1_select = MS_CONV_D1_4096, uint8_t ms_d2_select = MS_CONV_D2_4096) :I2C_Base(I2Cxn,STANDART){
+	MS5611(I2C_TypeDef *I2Cxn, uint8_t ms_d1_select = MS_CONV_D1_4096, uint8_t ms_d2_select = MS_CONV_D2_4096) :I2C_Base(I2Cxn,STANDART){
 		d1_selection = ms_d1_select;
 		d2_selection = ms_d2_select;
 	}
 
-	void Get_Coefficent(std::vector<uint16_t> &coeff_data);
-	void Get_Raw_Data(uint32_t &raw_pressure, uint32_t &raw_temp);
-	void Calculate_Absolute_Val(std::vector<uint16_t> &coeff, double *return_val, double &alt);
+	void get_coefficent_v(std::vector<uint16_t> &coeff_data);
+	void get_raw_data(uint32_t &raw_pressure, uint32_t &raw_temp);
+	void calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *return_val, double &alt);
+
+	void get_coefficent(uint16_t *coeff_data);
+	void calculate_absolute_val(uint16_t *coeff, double *return_val, double &alt);
 };

@@ -11,7 +11,7 @@
 #include "../Libs/GPIO.hpp"
 #include "../Libs/Nvic.hpp"
 #include "../Libs/USART.hpp"
-#include "../Libs/Mpu6050.hpp" oldu saol burasi debug ekrani
+#include "../Libs/Mpu6050.hpp"
 #include "../Libs/Ms5611.hpp"
 
 void GPIO_init(){
@@ -47,15 +47,21 @@ int main(void){
 			"\n\r*  A Man Chooses A Slave Obeys                          *"
 			"\n\r                                           <Andrew Ryan>*"
 			"\n\r*********************************************************";
-	uint8_t clear_disp[] = "\033[2J\033[H";		//Clear Display
+	uint8_t clear_disp[] = "\033[2J\033[H";
 	uint8_t clear_line[] = "\033[2K\r";
+
 	uint32_t mpu_time;
-	int32_t err[5] = {0,0,0,0,0};
+	int32_t err[5] = {0};
+	int32_t acc_total_vec=0;
 	int16_t raw_gyro[3], raw_accel[3];
 	float gyro_pitch=0, gyro_roll=0, gyro_constant=0, acc_pitch=0, acc_roll=0;
-	int32_t acc_total_vec=0;
-	bool set_gyro_angles=0;
 	float final_pitch=0, final_roll=0;
+	bool set_gyro_angles=0;
+
+	uint32_t ms5611_time;
+	uint16_t coeff_data[6] = {0};
+	double ms5611_data[2] = {0};
+	double altitude = 0;
 
 	Clock_init();
 	GPIO_init();
@@ -76,7 +82,12 @@ int main(void){
 	Serial.USART_Transmit_float(gyro_constant,15);
 	delay(1000);
 	Serial.USART_Transmit(clear_line);
-	Serial.USART_Transmit("Roll\t\tPitch\n\r");
+
+	Serial.USART_Transmit("MS5611 Starting");
+	MS5611 ms5611(I2C1);
+	ms5611.get_coefficent(coeff_data);
+	Serial.USART_Transmit(clear_line);
+	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\n\r");
 
 	interrupt_init();
 
@@ -123,19 +134,26 @@ int main(void){
 			final_pitch = gyro_pitch;
 			final_roll  = gyro_roll ;
 
-     		while((TIM14-> CNT - mpu_time) < 4000 && mpu_tick);
+     		while(((TIM14-> CNT - mpu_time) < 4000) && mpu_tick);
 		}
+
+		if(mpu_tick == false){
+			ms5611_time = TIM14-> CNT;
+			ms5611.calculate_absolute_val(coeff_data,ms5611_data,altitude);
+			while(((TIM14-> CNT - ms5611_time) < 4000) && !mpu_tick);
+		}
+
 			Serial.USART_Transmit_float(final_roll,5);
 			Serial.USART_Transmit("\t\t");
 			Serial.USART_Transmit_float(final_pitch,5);
+			Serial.USART_Transmit("\t\t");
+			Serial.USART_Transmit_float(altitude,5);
 			Serial.USART_Transmit("\n\r");
 			sayac2++;
 			if(sayac2 == 5){
 				sayac2 = 0;
 				Serial.USART_Transmit("\033[5A\r\033[0J");
 			}
-
-			//MS5611 codes here
 	}
 }
 
