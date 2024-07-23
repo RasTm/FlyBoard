@@ -3,21 +3,21 @@
 
 #define HMC_ADDR   0x3C
 
-#define CONF_REG_A 0x00
-#define CONF_REG_B 0x01
-#define MODE_REG   0x02
+#define HMC_CONF_REG_A 0x00
+#define HMC_CONF_REG_B 0x01
+#define HMC_MODE_REG   0x02
 
-#define DATA_X_MSB 0x03
-#define DATA_X_LSB 0x04
-#define DATA_Y_MSB 0x05
-#define DATA_Y_LSB 0x06
-#define DATA_Z_MSB 0x07
-#define DATA_Z_LSB 0x08
+#define HMC_DATA_X_MSB 0x03
+#define HMC_DATA_X_LSB 0x04
+#define HMC_DATA_Y_MSB 0x05
+#define HMC_DATA_Y_LSB 0x06
+#define HMC_DATA_Z_MSB 0x07
+#define HMC_DATA_Z_LSB 0x08
 
-#define STATUS_REG 0x09
-#define ID_REG_A   0x0A
-#define ID_REG_B   0x0B
-#define ID_REG_C   0x0C
+#define HMC_STATUS_REG 0x09
+#define HMC_ID_REG_A   0x0A
+#define HMC_ID_REG_B   0x0B
+#define HMC_ID_REG_C   0x0C
 
 //CRA Bits
 //MA = Samples Averaged per Measurement Output
@@ -53,23 +53,24 @@
 
 //Mode Reg Bits
 //MD = Mode Select
-#define MD_0       0x00           //Continuous Measurement Mode
-#define MD_1       0x01           //Single Measurement Mode (def)
+#define MD_0_CONT  0x00           //Continuous Measurement Mode
+#define MD_1_SING  0x01           //Single Measurement Mode (def)
 
 class HMC5883 : public I2C_Base{
 	public:
-	uint8_t  data_rate_val;
+	uint8_t data_rate_reg, gain_reg, avg_samp_reg;
+//	uint8_t  data_rate_val;
 	uint16_t gain_val;
 
-	HMC5883(I2C_TypeDef* I2Cxn, uint8_t data_rate, uint8_t gain) :I2C_Base(I2Cxn,STANDART){
-		if(gain == GN_0){ gain_val = 1370;}
-   else if(gain == GN_1){ gain_val = 1090;}
-   else if(gain == GN_2){ gain_val =  820;}
-   else if(gain == GN_3){ gain_val =  660;}
-   else if(gain == GN_4){ gain_val =  440;}
-   else if(gain == GN_5){ gain_val =  390;}
-   else if(gain == GN_6){ gain_val =  330;}
-   else if(gain == GN_7){ gain_val =  230;}
+	HMC5883(I2C_TypeDef* I2Cxn, uint8_t average_sample = MA_1, uint8_t data_rate = DO_4, uint8_t gain = GN_1) :I2C_Base(I2Cxn,STANDART){
+		if(gain == GN_0){ gain_val = 1370; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_1){ gain_val = 1090; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_2){ gain_val =  820; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_3){ gain_val =  660; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_4){ gain_val =  440; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_5){ gain_val =  390; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_6){ gain_val =  330; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_7){ gain_val =  230; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
 	}
 
 	void config();
