@@ -74,5 +74,5 @@ class HMC5883 : public I2C_Base{
 	}
 
 	void config();
-
+	void mag_read(uint8_t *data);
 };
