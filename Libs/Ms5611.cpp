@@ -36,24 +36,35 @@ void MS5611::get_coefficent(uint16_t *coeff_data){
   * @param  raw_temp    : This variable is where do you want to save raw temperature data.
   * @retval
   */
-void MS5611::get_raw_data(uint32_t &raw_pressure, uint32_t &raw_temp){
+void MS5611::get_raw_data(){
+
 	uint8_t Raw_val[3] = {0,0,0};
+	if(counter == 0){
+		write_byte_small(MS_ADDR, d1_selection);		//Pressure Conversion
+		counter++;
+		//delay(11);
+		goto finish;
+	}
+	if(counter == 1){
+		write_byte_small(MS_ADDR, MS_ADC_READ);
+		multi_byte_read_small(MS_ADDR, Raw_val, 3);
+		raw_preasure = ((Raw_val[0]<<16)+(Raw_val[1]<<8)+Raw_val[2]);
+		Raw_val[0]=0,Raw_val[1]=0,Raw_val[2]=0;
 
-	write_byte_small(MS_ADDR, d1_selection);		//Pressure Conversion
-	delay(11);
+		write_byte_small(MS_ADDR, d2_selection);		//temp Conversion
+		counter++;
+		//delay(11);
+		goto finish;
+	}
 
-	write_byte_small(MS_ADDR, MS_ADC_READ);
-	multi_byte_read_small(MS_ADDR, Raw_val, 3);
-	raw_pressure = ((Raw_val[0]<<16)+(Raw_val[1]<<8)+Raw_val[2]);
-
-	Raw_val[0]=0,Raw_val[1]=0,Raw_val[2]=0;
-
-	write_byte_small(MS_ADDR, d2_selection);		//temp Conversion
-	delay(11);
-
-	write_byte_small(MS_ADDR, MS_ADC_READ);
-	multi_byte_read_small(MS_ADDR, Raw_val, 3);
-	raw_temp = ((Raw_val[0]<<16)+(Raw_val[1]<<8)+Raw_val[2]);
+	if(counter == 2){
+		write_byte_small(MS_ADDR, MS_ADC_READ);
+		multi_byte_read_small(MS_ADDR, Raw_val, 3);
+		raw_temp = ((Raw_val[0]<<16)+(Raw_val[1]<<8)+Raw_val[2]);
+		conv_complete = true;
+		counter = 0;
+	}
+	finish:;
 }
 
 /**
@@ -66,35 +77,63 @@ void MS5611::get_raw_data(uint32_t &raw_pressure, uint32_t &raw_temp){
   * @retval
   */
 void MS5611::calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *return_val, double &alt){
-	uint32_t raw_pressure, raw_temp;
-	get_raw_data(raw_pressure, raw_temp);
+	if(conv_complete != true){
+		get_raw_data();
+	}
+	if(conv_complete == true){
+		int32_t dT   = raw_temp-(coeff[4]*256);
+		int32_t TEMP = 2000+(((int64_t)dT*coeff[5])/8388608);
 
-	int32_t dT   = raw_temp-(coeff[4]*256);
-	int32_t TEMP = 2000+(((int64_t)dT*coeff[5])/8388608);
+		int64_t OFF  = ((int64_t)coeff[1]*65536)+(((int64_t)coeff[3]*dT)/128);
+		int64_t SENS = ((int64_t)coeff[0]*32768)+(((int64_t)coeff[2]*dT)/256);
+		int32_t P	 = ((((raw_preasure*SENS)/2097152)-OFF)/32768);
+		return_val[0] = P/100.0;
+		return_val[1] = TEMP/100.0;
 
-	int64_t OFF  = ((int64_t)coeff[1]*65536)+(((int64_t)coeff[3]*dT)/128);
-	int64_t SENS = ((int64_t)coeff[0]*32768)+(((int64_t)coeff[2]*dT)/256);
-	int32_t P	 = ((((raw_pressure*SENS)/2097152)-OFF)/32768);
-	return_val[0] = P/100.0;
-	return_val[1] = TEMP/100.0;
-
-//	alt = ((1.0 - (pow((return_val[0]/1013.25),0.1902949) )) * 44307.69396);
-	alt = (((pow((1013.25/return_val[0]),0.1902225603956629256229788852958))-1) * (return_val[1]+273.15)) / 0.0065;
+	//	alt = ((1.0 - (pow((return_val[0]/1013.25),0.1902949) )) * 44307.69396);
+		alt = (((pow((1013.25/return_val[0]),0.1902225603956629256229788852958))-1) * (return_val[1]+273.15)) / 0.0065;
+	}
 }
 
 void MS5611::calculate_absolute_val(uint16_t *coeff, double *return_val, double &alt){
-	uint32_t raw_pressure, raw_temp;
-	get_raw_data(raw_pressure, raw_temp);
+	if(conv_complete != true){
+		get_raw_data();
+	}
 
-	int32_t dT   = raw_temp-(coeff[4]*256);
-	int32_t TEMP = 2000+(((int64_t)dT*coeff[5])/8388608);
+	if(conv_complete == true){
+		int32_t dT   = raw_temp-(coeff[4]*256);
+		int32_t TEMP = 2000+(((int64_t)dT*coeff[5])/8388608);
 
-	int64_t OFF  = ((int64_t)coeff[1]*65536)+(((int64_t)coeff[3]*dT)/128);
-	int64_t SENS = ((int64_t)coeff[0]*32768)+(((int64_t)coeff[2]*dT)/256);
-	int32_t P	 = ((((raw_pressure*SENS)/2097152)-OFF)/32768);
-	return_val[0] = P/100.0;
-	return_val[1] = TEMP/100.0;
+		int64_t OFF  = ((int64_t)coeff[1]*65536)+(((int64_t)coeff[3]*dT)/128);
+		int64_t SENS = ((int64_t)coeff[0]*32768)+(((int64_t)coeff[2]*dT)/256);
+		int32_t P	 = ((((raw_preasure*SENS)/2097152)-OFF)/32768);
+		return_val[0] = P/100.0;
+		return_val[1] = TEMP/100.0;
 
-//	alt = ((1.0 - (pow((return_val[0]/1013.25),0.1902949) )) * 44307.69396);
-	alt = (((pow((1013.25/return_val[0]),0.1902225603956629256229788852958))-1) * (return_val[1]+273.15)) / 0.0065;
+	//	alt = ((1.0 - (pow((return_val[0]/1013.25),0.1902949) )) * 44307.69396);
+		alt = (((pow((1013.25/return_val[0]),0.1902225603956629256229788852958))-1) * (return_val[1]+273.15)) / 0.0065;
+		conv_complete = false;
+	}
+}
+
+/*
+ * @brief Same method as calculate_absolute_val() but it dont return preasure and temp values
+ */
+void MS5611::calculate_absolute_val(uint16_t *coeff, double &alt){
+	if(conv_complete != true){
+		get_raw_data();
+	}
+
+	if(conv_complete == true){
+		int32_t dT   = raw_temp-(coeff[4]*256);
+		int32_t TEMP = 2000+(((int64_t)dT*coeff[5])/8388608);
+
+		int64_t OFF  = ((int64_t)coeff[1]*65536)+(((int64_t)coeff[3]*dT)/128);
+		int64_t SENS = ((int64_t)coeff[0]*32768)+(((int64_t)coeff[2]*dT)/256);
+		int32_t P	 = ((((raw_preasure*SENS)/2097152)-OFF)/32768);
+
+	//	alt = ((1.0 - (pow((return_val[0]/1013.25),0.1902949) )) * 44307.69396);
+		alt = (((pow((1013.25/(P/100.0)),0.1902225603956629256229788852958))-1) * ((TEMP/100.0)+273.15)) / 0.0065;
+		conv_complete = false;
+	}
 }

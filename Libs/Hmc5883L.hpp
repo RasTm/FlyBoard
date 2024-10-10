@@ -1,6 +1,10 @@
 #include <stm32f4xx.h>
 #include "I2C.hpp"
 
+#define RAD_TO_DEG 57.295779513082320876798154814105
+#define DEC_ANGLE (6.0 + (14.0/60.0)) / (57.295779513082320876798154814105)
+#define PI 3.14159265359
+
 #define HMC_ADDR   0x3C
 
 #define HMC_CONF_REG_A 0x00
@@ -60,19 +64,20 @@ class HMC5883 : public I2C_Base{
 	public:
 	uint8_t data_rate_reg, gain_reg, avg_samp_reg;
 //	uint8_t  data_rate_val;
-	uint16_t gain_val;
+	float gain_val;
 
 	HMC5883(I2C_TypeDef* I2Cxn, uint8_t average_sample = MA_1, uint8_t data_rate = DO_4, uint8_t gain = GN_1) :I2C_Base(I2Cxn,STANDART){
-		if(gain == GN_0){ gain_val = 1370; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
-   else if(gain == GN_1){ gain_val = 1090; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
-   else if(gain == GN_2){ gain_val =  820; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
-   else if(gain == GN_3){ gain_val =  660; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
-   else if(gain == GN_4){ gain_val =  440; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
-   else if(gain == GN_5){ gain_val =  390; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
-   else if(gain == GN_6){ gain_val =  330; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
-   else if(gain == GN_7){ gain_val =  230; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+		if(gain == GN_0){ gain_val = 0.88; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_1){ gain_val = 1.30; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_2){ gain_val = 1.90; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_3){ gain_val = 2.50; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_4){ gain_val = 4.00; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_5){ gain_val = 4.70; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_6){ gain_val = 5.60; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
+   else if(gain == GN_7){ gain_val = 8.10; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
 	}
 
 	void config();
-	void mag_read(uint8_t *data);
+	void mag_read(uint16_t *data);
+	void mag_conv(float &heading_deg);
 };

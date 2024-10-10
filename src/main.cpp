@@ -13,6 +13,7 @@
 #include "../Libs/USART.hpp"
 #include "../Libs/Mpu6050.hpp"
 #include "../Libs/Ms5611.hpp"
+#include "../Libs/Hmc5883L.hpp"
 
 void GPIO_init(){
 	Set_Gpio(GPIOD,12,OUTPUT,PUSH,MED,NOT,SyS);
@@ -25,8 +26,8 @@ void GPIO_init(){
 void timer14_config(){
 	RCC-> APB1ENR |= 0x00000100;			//Timer14 Clock Enable
 	TIM14-> DIER  |= 0x0001;                //Update Interrupt Enable
-	TIM14-> PSC    = 83;					//Tout = ((PSC+1)+(ARR+1))/Clk_int)
-	TIM14-> ARR    = 3999;					//Tout must be 4us
+	TIM14-> PSC    = 83;					//Tout = ((PSC+1)*(ARR+1))/Clk_int)
+	TIM14-> ARR    = 1999;					//Tout must be 2ms
 	TIM14-> CR1   |= 0x0085;                //ARPE Enable ,URS and CEN Enable
 }
 void interrupt_init(){
@@ -35,8 +36,8 @@ void interrupt_init(){
 	Set_Ext_Interrupt(0,GPIO_A,RISING);
 }
 
-uint8_t sayac=1, sayac2=0;
-bool mpu_tick = false;
+uint8_t sayac=1, sayac2=0, tim14_int_counter=0, tim14_last_counter=0;
+bool ms_ready = true, ms_complete = false, mpu_ready = true, mpu_complete = false;
 
 int main(void){
 	uint8_t text[]  = "Flyboard Pertinax v1.0";
@@ -50,7 +51,6 @@ int main(void){
 	uint8_t clear_disp[] = "\033[2J\033[H";
 	uint8_t clear_line[] = "\033[2K\r";
 
-	uint32_t mpu_time;
 	int32_t err[5] = {0};
 	int32_t acc_total_vec=0;
 	int16_t raw_gyro[3], raw_accel[3];
@@ -58,10 +58,8 @@ int main(void){
 	float final_pitch=0, final_roll=0;
 	bool set_gyro_angles=0;
 
-	uint32_t ms5611_time;
 	uint16_t coeff_data[6] = {0};
-	double ms5611_data[2] = {0};
-	double altitude = 0;
+	double altitude = 0.0;
 
 	Clock_init();
 	GPIO_init();
@@ -79,7 +77,7 @@ int main(void){
 	mpu.calc_IMU_error(err);
 	gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);
 	Serial.USART_Transmit("\033[2K\rCalibration Done Gyro Constant = ");
-	Serial.USART_Transmit_float(gyro_constant,15);
+	Serial.USART_Transmit_float(gyro_constant,8);
 	delay(1000);
 	Serial.USART_Transmit(clear_line);
 
@@ -92,8 +90,8 @@ int main(void){
 	interrupt_init();
 
 	while (1){
-		if(mpu_tick == true){
-			mpu_time = TIM14-> CNT;
+		if(mpu_ready == true){
+
 			mpu.get_gyro(raw_gyro);
 			mpu.get_accel(raw_accel);
 
@@ -134,33 +132,51 @@ int main(void){
 			final_pitch = gyro_pitch;
 			final_roll  = gyro_roll ;
 
-     		while(((TIM14-> CNT - mpu_time) < 4000) && mpu_tick);
+			mpu_complete = true;
+			mpu_ready = false;
 		}
 
-		if(mpu_tick == false){
-			ms5611_time = TIM14-> CNT;
-			ms5611.calculate_absolute_val(coeff_data,ms5611_data,altitude);
-			while(((TIM14-> CNT - ms5611_time) < 4000) && !mpu_tick);
+		if(ms_ready == true){
+			ms5611.calculate_absolute_val(coeff_data,altitude);
+			ms_complete = true;
+			ms_ready = false;
 		}
 
-			Serial.USART_Transmit_float(final_roll,5);
-			Serial.USART_Transmit("\t\t");
-			Serial.USART_Transmit_float(final_pitch,5);
-			Serial.USART_Transmit("\t\t");
-			Serial.USART_Transmit_float(altitude,5);
-			Serial.USART_Transmit("\n\r");
-			sayac2++;
-			if(sayac2 == 5){
-				sayac2 = 0;
-				Serial.USART_Transmit("\033[5A\r\033[0J");
-			}
+		Serial.USART_Transmit_float(final_roll,5);
+		Serial.USART_Transmit("\t\t");
+		Serial.USART_Transmit_float(final_pitch,5);
+		Serial.USART_Transmit("\t\t");
+		Serial.USART_Transmit_float(altitude,5);
+		Serial.USART_Transmit("\n\r");
+		sayac2++;
+		if(sayac2 == 5){
+			sayac2 = 0;
+			Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
+		}
 	}
 }
 
 extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 	if(TIM14-> SR & 0x0001){
 		TIM14-> SR = 0;
-		mpu_tick = !mpu_tick;
+		tim14_int_counter++;
+
+		if(mpu_complete == true && ((12 - tim14_last_counter) + tim14_int_counter) > 6){  //12ms For MS5611 Temp/Preasure Conv
+			ms_ready = true;
+			mpu_ready = false;
+			mpu_complete = false;
+			tim14_last_counter = tim14_int_counter;
+		}
+
+		if(ms_complete == true){
+			mpu_ready= true;
+			ms_ready = false;
+            ms_complete = false;
+		}
+
+		if(tim14_int_counter == 12){
+			tim14_int_counter = 0;
+		}
 		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
 	}
 }}
