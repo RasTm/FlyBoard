@@ -6,6 +6,7 @@
  *********************************************************/
 
 #include "stm32f4xx.h"
+#include "arm_math.h"
 
 #include "../Libs/RCC.hpp"
 #include "../Libs/GPIO.hpp"
