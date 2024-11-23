@@ -105,7 +105,7 @@ void USART_Base::USART_Receive(std::vector<uint8_t> data){
 	USARTx-> CR1 |= 0x00002004;				//USART Enable RX Mode Set
 
 	while(!(USARTx-> SR & 0x00000020)){		//Check RXNE bit
-		if(USARTx->DR == '\0' && USARTx-> DR & 0x00000020){
+		if(USARTx->DR == '\0' && (USARTx-> DR & 0x00000020)){
 			break;
 		}
 		data.push_back(USARTx-> DR);
