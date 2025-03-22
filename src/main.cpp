@@ -24,7 +24,7 @@ void GPIO_init(){
 
 	Set_Gpio(GPIOA,0,INPUT,PUSH,LOW,DOWN,SyS);
 }
-void timer14_config(){
+void program_timer(){
 	RCC-> APB1ENR |= 0x00000100;			//Timer14 Clock Enable
 	TIM14-> DIER  |= 0x0001;                //Update Interrupt Enable
 	TIM14-> PSC    = 83;					//Tout = ((PSC+1)*(ARR+1))/Clk_int)
@@ -37,12 +37,12 @@ void interrupt_init(){
 	Set_Ext_Interrupt(0,GPIO_A,RISING);
 }
 
-uint8_t sayac=1, sayac2=0, tim14_int_counter=0, tim14_last_counter=0;
+uint8_t sayac=1, sayac2=0, program_int_counter=0, program_last_counter=0;
 bool ms_ready = true, ms_complete = false, mpu_ready = true, mpu_complete = false;
 
 int main(void){
-	uint8_t text[]  = "Flyboard Pertinax v1.0";
-	uint8_t text2[]	=
+	uint8_t project_header[]  = "Flyboard Pertinax v1.0";
+	uint8_t motivation[]	=
 			"\n\r*********************************************************"
 			"\n\r*  In The End, What Separates A Man From A Slave?       *"
 			"\n\r*  Money? Power? No.                                    *"
@@ -52,6 +52,7 @@ int main(void){
 	uint8_t clear_disp[] = "\033[2J\033[H";
 	uint8_t clear_line[] = "\033[2K\r";
 
+	//MPU6050 Variables
 	int32_t err[5] = {0};
 	int32_t acc_total_vec=0;
 	int16_t raw_gyro[3], raw_accel[3];
@@ -59,18 +60,19 @@ int main(void){
 	float final_pitch=0, final_roll=0;
 	bool set_gyro_angles=0;
 
+	//MS5611 Variables
 	uint16_t coeff_data[6] = {0};
 	double altitude = 0.0;
 
 	Clock_init();
 	GPIO_init();
-	timer14_config();
+	program_timer();
 
 	USART_Base Serial(USART_6,115200);
-	Serial.USART_Transmit(text2);
+	Serial.USART_Transmit(motivation);
 	delay(1000);
 	Serial.USART_Transmit(clear_disp);
-	Serial.USART_Transmit(text);
+	Serial.USART_Transmit(project_header);
 
 	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL2);
 	mpu.config();
@@ -160,13 +162,13 @@ int main(void){
 extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 	if(TIM14-> SR & 0x0001){
 		TIM14-> SR = 0;
-		tim14_int_counter++;
+		program_int_counter++;
 
-		if(mpu_complete == true && ((12 - tim14_last_counter) + tim14_int_counter) > 6){  //12ms For MS5611 Temp/Preasure Conv
+		if(mpu_complete == true && ((12 - program_last_counter) + program_int_counter) > 6){  //12ms For MS5611 Temp/Preasure Conv
 			ms_ready = true;
 			mpu_ready = false;
 			mpu_complete = false;
-			tim14_last_counter = tim14_int_counter;
+			program_last_counter = program_int_counter;
 		}
 
 		if(ms_complete == true){
@@ -175,8 +177,8 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
             ms_complete = false;
 		}
 
-		if(tim14_int_counter == 12){
-			tim14_int_counter = 0;
+		if(program_int_counter == 12){
+			program_int_counter = 0;
 		}
 		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
 	}
