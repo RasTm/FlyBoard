@@ -24,7 +24,7 @@ void GPIO_init(){
 
 	Set_Gpio(GPIOA,0,INPUT,PUSH,LOW,DOWN,SyS);
 }
-void program_timer(){
+void Program_timer(){
 	RCC-> APB1ENR |= 0x00000100;			//Timer14 Clock Enable
 	TIM14-> DIER  |= 0x0001;                //Update Interrupt Enable
 	TIM14-> PSC    = 83;					//Tout = ((PSC+1)*(ARR+1))/Clk_int)
@@ -66,7 +66,7 @@ int main(void){
 
 	Clock_init();
 	GPIO_init();
-	program_timer();
+	Program_timer();
 
 	USART_Base Serial(USART_6,115200);
 	Serial.USART_Transmit(motivation);
@@ -74,11 +74,11 @@ int main(void){
 	Serial.USART_Transmit(clear_disp);
 	Serial.USART_Transmit(project_header);
 
-	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL2);
+	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL1);
 	mpu.config();
 	Serial.USART_Transmit("\n\rCalibrating...");
 	mpu.calc_IMU_error(err);
-	gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);
+	gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);                  //250 Hz Refresh rate
 	Serial.USART_Transmit("\033[2K\rCalibration Done Gyro Constant = ");
 	Serial.USART_Transmit_float(gyro_constant,8);
 	delay(1000);
@@ -109,8 +109,8 @@ int main(void){
 			gyro_pitch += raw_gyro[0] * gyro_constant;
 			gyro_roll  += raw_gyro[1] * gyro_constant;
 
-			gyro_pitch += gyro_pitch * sin(raw_gyro[2] * gyro_constant)*RAD_TO_DEG;
-			gyro_roll  -= gyro_roll  * sin(raw_gyro[2] * gyro_constant)*RAD_TO_DEG;
+			gyro_pitch += gyro_roll  * sin(raw_gyro[2] * (gyro_constant * RAD_TO_DEG));
+			gyro_roll  -= gyro_pitch * sin(raw_gyro[2] * (gyro_constant * RAD_TO_DEG));
 
 			acc_total_vec = sqrt((raw_accel[0]*raw_accel[0])+(raw_accel[1]*raw_accel[1])+(raw_accel[2]*raw_accel[2]));
 			acc_pitch = asin((float)raw_accel[1]/acc_total_vec)* RAD_TO_DEG;
