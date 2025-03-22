@@ -7,8 +7,8 @@
 void MPU6050::config(){
 	write_byte(MPU6050_ADDR0, MPU6050_PWR_MGMT1, 0);						//Mpu6050 outoff the sleep mode
 	write_byte(MPU6050_ADDR0, MPU6050_CONFIG, 0x02);                        //Mpu6050 low pass filter set to 3ms
-	write_byte(MPU6050_ADDR0, MPU6050_ACCEL_CONF, accel_fs_reg);			//Mpu6050 Accel Set to 2g mode
-	write_byte(MPU6050_ADDR0, MPU6050_GYRO_CONF,  gyro_fs_reg);	     		//Mpu6050 Gyro  Set to 250 degre/sec
+	write_byte(MPU6050_ADDR0, MPU6050_ACCEL_CONF, accel_fs_reg);			//Mpu6050 Accel Set to 2g mode default
+	write_byte(MPU6050_ADDR0, MPU6050_GYRO_CONF,  gyro_fs_reg);	     		//Mpu6050 Gyro  Set to 250 degre/sec default
 	delay(30);																//For Gyroscope Startup Time
 }
 

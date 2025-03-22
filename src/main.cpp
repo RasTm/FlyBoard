@@ -27,7 +27,7 @@ void GPIO_init(){
 void Program_timer(){
 	RCC-> APB1ENR |= 0x00000100;			//Timer14 Clock Enable
 	TIM14-> DIER  |= 0x0001;                //Update Interrupt Enable
-	TIM14-> PSC    = 83;					//Tout = ((PSC+1)*(ARR+1))/Clk_int)
+	TIM14-> PSC    = 83;					//Tout = ((PSC+1)*(ARR+1))/Tim_clk)
 	TIM14-> ARR    = 1999;					//Tout must be 2ms
 	TIM14-> CR1   |= 0x0085;                //ARPE Enable ,URS and CEN Enable
 }
@@ -37,7 +37,8 @@ void interrupt_init(){
 	Set_Ext_Interrupt(0,GPIO_A,RISING);
 }
 
-uint8_t sayac=1, sayac2=0, program_int_counter=0, program_last_counter=0;
+uint8_t sayac=1, sayac2=0, mpu_Hz_counter=0, mpu_Hz=0;
+uint32_t program_int_counter=0, program_last_counter=0, program_Hz_counter=0;
 bool ms_ready = true, ms_complete = false, mpu_ready = true, mpu_complete = false;
 
 int main(void){
@@ -55,7 +56,7 @@ int main(void){
 	//MPU6050 Variables
 	int32_t err[5] = {0};
 	int32_t acc_total_vec=0;
-	int16_t raw_gyro[3], raw_accel[3];
+	int16_t raw_gyro[3] = {0}, raw_accel[3] = {0};
 	float gyro_pitch=0, gyro_roll=0, gyro_constant=0, acc_pitch=0, acc_roll=0;
 	float final_pitch=0, final_roll=0;
 	bool set_gyro_angles=0;
@@ -94,7 +95,7 @@ int main(void){
 
 	while (1){
 		if(mpu_ready == true){
-
+			mpu_Hz_counter++;
 			mpu.get_gyro(raw_gyro);
 			mpu.get_accel(raw_accel);
 
@@ -116,9 +117,6 @@ int main(void){
 			acc_pitch = asin((float)raw_accel[1]/acc_total_vec)* RAD_TO_DEG;
 			acc_roll  = asin((float)raw_accel[0]/acc_total_vec)*-RAD_TO_DEG;
 
-			acc_pitch -= 0;
-			acc_roll  -= 0;
-
 			if(set_gyro_angles){
 				gyro_pitch = gyro_pitch * 0.96 + acc_pitch * 0.04;
 				gyro_roll  = gyro_roll  * 0.96 + acc_roll  * 0.04;
@@ -128,9 +126,6 @@ int main(void){
 				gyro_pitch = acc_pitch;
 				gyro_roll  = acc_roll;
 			}
-
-//			final_pitch = final_pitch * 0.8 + gyro_pitch * 0.2;
-//			final_roll  = final_roll  * 0.8 + gyro_roll  * 0.2;
 
 			final_pitch = gyro_pitch;
 			final_roll  = gyro_roll ;
@@ -149,7 +144,7 @@ int main(void){
 		Serial.USART_Transmit("\t\t");
 		Serial.USART_Transmit_float(final_pitch,5);
 		Serial.USART_Transmit("\t\t");
-		Serial.USART_Transmit_float(altitude,5);
+		Serial.USART_Transmit_float(mpu_Hz,5);
 		Serial.USART_Transmit("\n\r");
 		sayac2++;
 		if(sayac2 == 5){
@@ -163,8 +158,9 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 	if(TIM14-> SR & 0x0001){
 		TIM14-> SR = 0;
 		program_int_counter++;
+		program_Hz_counter++;
 
-		if(mpu_complete == true && ((12 - program_last_counter) + program_int_counter) > 6){  //12ms For MS5611 Temp/Preasure Conv
+		if(mpu_complete == true && ((7 - program_last_counter) + program_int_counter) > 6){  //6x2=12ms For MS5611 Temp/Preasure Conv 7x2=14ms for guarantee
 			ms_ready = true;
 			mpu_ready = false;
 			mpu_complete = false;
@@ -177,9 +173,16 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
             ms_complete = false;
 		}
 
-		if(program_int_counter == 12){
+		if(program_Hz_counter == 500){
+			mpu_Hz = mpu_Hz_counter;
+			program_Hz_counter = 0;
+			mpu_Hz_counter = 0;
+		}
+
+		if(program_int_counter == 7){
 			program_int_counter = 0;
 		}
+
 		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
 	}
 }}
