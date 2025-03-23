@@ -86,6 +86,7 @@ std::vector<int32_t> MPU6050::calc_IMU_error_v(){
 
 	err.insert(err.begin()  , IMU_data[0]);
 	err.insert(err.begin()+1, IMU_data[1]);
+	err.insert(err.begin()+2, (IMU_data[2] - (int32_t)accel_fs_val));
 
 	while(c<SAMPLE){
 		multi_byte_read(MPU6050_ADDR0, MPU6050_GYRO_X_HOUT, pre_data, 6);
@@ -100,9 +101,9 @@ std::vector<int32_t> MPU6050::calc_IMU_error_v(){
 		delay(3);
 	}
 
-	err.insert(err.begin()+2, gyroX_err/SAMPLE);
-	err.insert(err.begin()+3, gyroY_err/SAMPLE);
-	err.insert(err.begin()+4, gyroZ_err/SAMPLE);
+	err.insert(err.begin()+3, gyroX_err/SAMPLE);
+	err.insert(err.begin()+4, gyroY_err/SAMPLE);
+	err.insert(err.begin()+5, gyroZ_err/SAMPLE);
 
 	return err;
 }
@@ -120,6 +121,7 @@ void MPU6050::calc_IMU_error(int32_t *err){
 
 	err[0] = IMU_data[0];
 	err[1] = IMU_data[1];
+	err[2] = IMU_data[2] - (int32_t)accel_fs_val;
 
 	while(c<SAMPLE){
 		multi_byte_read(MPU6050_ADDR0, MPU6050_GYRO_X_HOUT, pre_data, 6);
@@ -134,7 +136,7 @@ void MPU6050::calc_IMU_error(int32_t *err){
 		delay(3);
 	}
 
-	err[2] = (gyroX_err/SAMPLE);
-	err[3] = (gyroY_err/SAMPLE);
-	err[4] = (gyroZ_err/SAMPLE);
+	err[3] = (gyroX_err/SAMPLE);
+	err[4] = (gyroY_err/SAMPLE);
+	err[5] = (gyroZ_err/SAMPLE);
 }

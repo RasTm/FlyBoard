@@ -103,8 +103,8 @@ int main(void){
 			raw_gyro[1] -= err[3];
 			raw_gyro[2] -= err[4];
 
-			raw_accel[0] -= 100;
-			raw_accel[1] -= 45;
+			raw_accel[0] -= err[0];
+			raw_accel[1] -= err[1];
 			raw_accel[2] -= 1248;
 
 			gyro_pitch += raw_gyro[0] * gyro_constant;
