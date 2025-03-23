@@ -56,9 +56,9 @@ int main(void){
 	//MPU6050 Variables
 	int32_t acc_total_vec=0;
 	int16_t raw_gyro[3] = {0}, raw_accel[3] = {0};
-	float gyro_pitch=0, gyro_roll=0, gyro_constant=0, acc_pitch=0, acc_roll=0;
-	float final_pitch=0, final_roll=0;
-	bool set_gyro_angles=0;
+	float old_gyro_roll=0.0, old_gyro_pitch=0.0, gyro_pitch=0.0, gyro_roll=0.0, gyro_constant=0.0, acc_pitch=0.0, acc_roll=0.0;
+	float final_pitch=0.0, final_roll=0.0;
+	bool set_gyro_angles=false;
 
 	//MS5611 Variables
 	double altitude = 0.0;
@@ -108,12 +108,15 @@ int main(void){
 			gyro_pitch += raw_gyro[0] * gyro_constant;
 			gyro_roll  += raw_gyro[1] * gyro_constant;
 
-			gyro_pitch += gyro_roll  * sin(raw_gyro[2] * (gyro_constant * RAD_TO_DEG));
-			gyro_roll  -= gyro_pitch * sin(raw_gyro[2] * (gyro_constant * RAD_TO_DEG));
+			old_gyro_pitch = gyro_pitch;
+			old_gyro_roll  = gyro_roll;
+
+			gyro_pitch += old_gyro_roll  * arm_sin_f32(raw_gyro[2] * (gyro_constant * RAD_TO_DEG));
+			gyro_roll  -= old_gyro_pitch * arm_sin_f32(raw_gyro[2] * (gyro_constant * RAD_TO_DEG));
 
 			acc_total_vec = sqrt((raw_accel[0]*raw_accel[0])+(raw_accel[1]*raw_accel[1])+(raw_accel[2]*raw_accel[2]));
-			acc_pitch = asin((float)raw_accel[1]/acc_total_vec)* RAD_TO_DEG;
-			acc_roll  = asin((float)raw_accel[0]/acc_total_vec)*-RAD_TO_DEG;
+			acc_pitch = asin((float)raw_accel[1]/(float)acc_total_vec)* RAD_TO_DEG;
+			acc_roll  = asin((float)raw_accel[0]/(float)acc_total_vec)*-RAD_TO_DEG;
 
 			if(set_gyro_angles){
 				gyro_pitch = gyro_pitch * 0.96 + acc_pitch * 0.04;
@@ -137,18 +140,18 @@ int main(void){
 			ms_complete = true;
 			ms_ready = false;
 		}
-
+/*
 		Serial.USART_Transmit_float(final_roll,5);
 		Serial.USART_Transmit("\t\t");
 		Serial.USART_Transmit_float(final_pitch,5);
 		Serial.USART_Transmit("\t\t");
-		Serial.USART_Transmit_float(mpu_Hz,5);
+		Serial.USART_Transmit_float(altitude,5);
 		Serial.USART_Transmit("\n\r");
 		sayac2++;
 		if(sayac2 == 5){
 			sayac2 = 0;
 			Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
-		}
+		}*/
 	}
 }
 
