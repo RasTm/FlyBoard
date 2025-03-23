@@ -135,7 +135,7 @@ class MPU6050 : public I2C_Base{
 	public:
 	uint8_t gyro_fs_reg, accel_fs_reg;
 	float gyro_fs_val, accel_fs_val;
-	int32_t mpu_err[6] = {0};
+	int32_t imu_calibration_error[6] = {0};				//MPU6050 error storing variable
 
 	MPU6050(I2C_TypeDef* I2Cxn, uint8_t gyro_fs_select = MPU6050_FS_SEL0, uint8_t accel_fs_select = MPU6050_FS_SEL0) :I2C_Base(I2Cxn,STANDART){
 
@@ -158,7 +158,7 @@ class MPU6050 : public I2C_Base{
 	std::vector <int16_t> get_accel_v();
 	std::vector <int16_t> get_gyro_v();
 
-	void calc_IMU_error(int32_t *err);
+	void calc_IMU_error();
 	void get_accel(int16_t *accel_data);
 	void get_gyro(int16_t *gyro_data);
 	int16_t get_temp();

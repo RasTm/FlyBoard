@@ -14,7 +14,7 @@ void MPU6050::config(){
 
 /**
   * @brief  This method allows you to receive 3 axis of accelerometer data.
-  * @retval 3 axis of accelerometer data int16 vector format
+  * @retval 3 axis of accelerometer data int16_t vector format.
   */
 std::vector<int16_t> MPU6050::get_accel_v(){
 	std::vector<uint8_t> pre_data;
@@ -26,6 +26,10 @@ std::vector<int16_t> MPU6050::get_accel_v(){
 	return accel_data;
 }
 
+/**
+  * @brief  This method allows you to receive 3 axis of accelerometer data.
+  * @retval 3 axis of accelerometer data int16_t format.
+  */
 void MPU6050::get_accel(int16_t *accel_data){
 	uint8_t pre_data[6] = {};
 	multi_byte_read(MPU6050_ADDR0, MPU6050_ACCEL_X_HOUT, pre_data, 6);
@@ -36,7 +40,7 @@ void MPU6050::get_accel(int16_t *accel_data){
 
 /**
   * @brief  This method allows you to receive 3 axis of gyroscope data.
-  * @retval 3 axis of gyroscope data int16 vector format
+  * @retval 3 axis of gyroscope data int16_t vector format.
   */
 std::vector<int16_t> MPU6050::get_gyro_v(){
 	std::vector<uint8_t> pre_data;
@@ -48,6 +52,10 @@ std::vector<int16_t> MPU6050::get_gyro_v(){
 	return gyro_data;
 }
 
+/**
+  * @brief  This method allows you to receive 3 axis of gyroscope data.
+  * @retval 3 axis of gyroscope data int16_t format.
+  */
 void MPU6050::get_gyro(int16_t *gyro_data){
 	uint8_t pre_data[6] = {};
 	multi_byte_read(MPU6050_ADDR0, MPU6050_GYRO_X_HOUT, pre_data, 6);
@@ -58,7 +66,7 @@ void MPU6050::get_gyro(int16_t *gyro_data){
 
 /**
   * @brief  This method allows you to receive temperature data.
-  * @retval Temperature data int16
+  * @retval Temperature data int16_t.
   */
 int16_t MPU6050::get_temp(){
 	int16_t temp_data;
@@ -70,7 +78,7 @@ int16_t MPU6050::get_temp(){
 
 /**
   * @brief  This method allows you to calculate IMU's axis errors.
-  * @retval 5 (XY accelerometer, XYZ gyro) axis of error data in vector float format.
+  * @retval 6 (XYZ accelerometer, XYZ gyro) axis of error data in vector int32_t format.
   */
 std::vector<int32_t> MPU6050::calc_IMU_error_v(){
 	std::vector<uint8_t> pre_data;
@@ -108,7 +116,11 @@ std::vector<int32_t> MPU6050::calc_IMU_error_v(){
 	return err;
 }
 
-void MPU6050::calc_IMU_error(int32_t *err){
+/**
+  * @brief  This method allows you to calculate IMU's axis errors.
+  * @retval 6 (XYZ accelerometer, XYZ gyro) axis of error data to mpu_err variable in class, int32_t format.
+  */
+void MPU6050::calc_IMU_error(){
 	uint8_t pre_data[6] = {};
 	int16_t IMU_data[3] = {};
 	int32_t gyroX_err=0, gyroY_err=0, gyroZ_err=0;
@@ -119,9 +131,9 @@ void MPU6050::calc_IMU_error(int32_t *err){
 	IMU_data[1] = (pre_data[2]<<8 | pre_data[3]);
 	IMU_data[2] = (pre_data[4]<<8 | pre_data[5]);
 
-	err[0] = IMU_data[0];
-	err[1] = IMU_data[1];
-	err[2] = IMU_data[2] - (int32_t)accel_fs_val;
+	imu_calibration_error[0] = IMU_data[0];
+	imu_calibration_error[1] = IMU_data[1];
+	imu_calibration_error[2] = IMU_data[2] - (int32_t)accel_fs_val;
 
 	while(c<SAMPLE){
 		multi_byte_read(MPU6050_ADDR0, MPU6050_GYRO_X_HOUT, pre_data, 6);
@@ -136,7 +148,7 @@ void MPU6050::calc_IMU_error(int32_t *err){
 		delay(3);
 	}
 
-	err[3] = (gyroX_err/SAMPLE);
-	err[4] = (gyroY_err/SAMPLE);
-	err[5] = (gyroZ_err/SAMPLE);
+	imu_calibration_error[3] = (gyroX_err/SAMPLE);
+	imu_calibration_error[4] = (gyroY_err/SAMPLE);
+	imu_calibration_error[5] = (gyroZ_err/SAMPLE);
 }

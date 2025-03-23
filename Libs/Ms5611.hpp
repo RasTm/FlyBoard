@@ -34,6 +34,7 @@ class MS5611:public I2C_Base{
 	private:
 	uint8_t d1_selection,d2_selection;		        //d1 Pressure, d2 Temp
 	uint32_t raw_preasure = 0, raw_temp = 0;        //Use in get_raw_data() and calc_absolute_val()
+	uint16_t coeff_data[6] = {0};					//Sensor special coefficient variables
 	public:
 	bool conv_complete = false;
 	uint8_t counter = 0;
@@ -47,7 +48,7 @@ class MS5611:public I2C_Base{
 	void calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *return_val, double &alt);
 
 	void get_raw_data();
-	void get_coefficent(uint16_t *coeff_data);
-	void calculate_absolute_val(uint16_t *coeff, double *return_val, double &alt);
-	void calculate_absolute_val(uint16_t *coeff, double &alt);
+	void get_coefficent();
+	void calculate_absolute_val(double *return_val, double &alt);
+	void calculate_absolute_val(double &alt);
 };

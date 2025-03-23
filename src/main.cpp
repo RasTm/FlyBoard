@@ -54,7 +54,6 @@ int main(void){
 	uint8_t clear_line[] = "\033[2K\r";
 
 	//MPU6050 Variables
-	int32_t err[5] = {0};
 	int32_t acc_total_vec=0;
 	int16_t raw_gyro[3] = {0}, raw_accel[3] = {0};
 	float gyro_pitch=0, gyro_roll=0, gyro_constant=0, acc_pitch=0, acc_roll=0;
@@ -62,7 +61,6 @@ int main(void){
 	bool set_gyro_angles=0;
 
 	//MS5611 Variables
-	uint16_t coeff_data[6] = {0};
 	double altitude = 0.0;
 
 	Clock_init();
@@ -78,7 +76,7 @@ int main(void){
 	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL1);
 	mpu.config();
 	Serial.USART_Transmit("\n\rCalibrating...");
-	mpu.calc_IMU_error(err);
+	mpu.calc_IMU_error();
 	gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);                  //250 Hz Refresh rate
 	Serial.USART_Transmit("\033[2K\rCalibration Done Gyro Constant = ");
 	Serial.USART_Transmit_float(gyro_constant,8);
@@ -87,7 +85,7 @@ int main(void){
 
 	Serial.USART_Transmit("MS5611 Starting");
 	MS5611 ms5611(I2C1);
-	ms5611.get_coefficent(coeff_data);
+	ms5611.get_coefficent();
 	Serial.USART_Transmit(clear_line);
 	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\n\r");
 
@@ -99,13 +97,13 @@ int main(void){
 			mpu.get_gyro(raw_gyro);
 			mpu.get_accel(raw_accel);
 
-			raw_gyro[0] -= err[2];
-			raw_gyro[1] -= err[3];
-			raw_gyro[2] -= err[4];
+			raw_accel[0] -= mpu.imu_calibration_error[0];
+			raw_accel[1] -= mpu.imu_calibration_error[1];
+			raw_accel[2] -= mpu.imu_calibration_error[2];
 
-			raw_accel[0] -= err[0];
-			raw_accel[1] -= err[1];
-			raw_accel[2] -= 1248;
+			raw_gyro[0] -= mpu.imu_calibration_error[3];
+			raw_gyro[1] -= mpu.imu_calibration_error[4];
+			raw_gyro[2] -= mpu.imu_calibration_error[5];
 
 			gyro_pitch += raw_gyro[0] * gyro_constant;
 			gyro_roll  += raw_gyro[1] * gyro_constant;
@@ -135,7 +133,7 @@ int main(void){
 		}
 
 		if(ms_ready == true){
-			ms5611.calculate_absolute_val(coeff_data,altitude);
+			ms5611.calculate_absolute_val(altitude);
 			ms_complete = true;
 			ms_ready = false;
 		}
