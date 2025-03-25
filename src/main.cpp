@@ -25,11 +25,11 @@ void GPIO_init(){
 	Set_Gpio(GPIOA,0,INPUT,PUSH,LOW,DOWN,SyS);
 }
 void Program_timer(){
-	RCC-> APB1ENR |= 0x00000100;			//Timer14 Clock Enable
-	TIM14-> DIER  |= 0x0001;                //Update Interrupt Enable
-	TIM14-> PSC    = 83;					//Tout = ((PSC+1)*(ARR+1))/Tim_clk)
-	TIM14-> ARR    = 999;					//Tout must be 1ms
-	TIM14-> CR1   |= 0x0085;                //ARPE Enable ,URS and CEN Enable
+	RCC-> APB1ENR |= 0x00000100;             //Timer14 Clock Enable
+	TIM14-> DIER  |= 0x0001;                 //Update Interrupt Enable
+	TIM14-> PSC    = 83;                     //Tout = ((PSC+1)*(ARR+1))/Tim_clk)
+	TIM14-> ARR    = 999;                    //Tout must be 1ms
+	TIM14-> CR1   |= 0x0085;                 //ARPE Enable ,URS and CEN Enable
 }
 void interrupt_init(){
 	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,2);
@@ -178,8 +178,8 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		}
 
 		if(ms_complete == true || (program_int_counter - program_last_counter) > 2){
-			mpu_ready= true;
-			ms_ready = false;
+            mpu_ready= true;
+            ms_ready = false;
             ms_complete = false;
 		}
 
