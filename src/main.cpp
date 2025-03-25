@@ -28,7 +28,7 @@ void Program_timer(){
 	RCC-> APB1ENR |= 0x00000100;			//Timer14 Clock Enable
 	TIM14-> DIER  |= 0x0001;                //Update Interrupt Enable
 	TIM14-> PSC    = 83;					//Tout = ((PSC+1)*(ARR+1))/Tim_clk)
-	TIM14-> ARR    = 1999;					//Tout must be 2ms
+	TIM14-> ARR    = 999;					//Tout must be 1ms
 	TIM14-> CR1   |= 0x0085;                //ARPE Enable ,URS and CEN Enable
 }
 void interrupt_init(){
@@ -37,8 +37,10 @@ void interrupt_init(){
 	Set_Ext_Interrupt(0,GPIO_A,RISING);
 }
 
-uint8_t sayac=1, sayac2=0, mpu_Hz_counter=0, mpu_Hz=0;
-uint32_t program_int_counter=0, program_last_counter=0, program_Hz_counter=0;
+uint8_t sayac=1, sayac2=0;
+uint32_t program_int_counter=0, program_last_counter=0, program_Hz_counter=0,
+		 mpu_Hz_counter=0, mpu_Hz=0, ms_Hz_counter=0, ms_Hz=0;
+
 bool ms_ready = true, ms_complete = false, mpu_ready = true, mpu_complete = false;
 
 int main(void){
@@ -136,10 +138,13 @@ int main(void){
 		}
 
 		if(ms_ready == true){
+			ms_Hz_counter++;
 			ms5611.calculate_absolute_val(altitude);
+
 			ms_complete = true;
 			ms_ready = false;
 		}
+
 /*
 		Serial.USART_Transmit_float(final_roll,5);
 		Serial.USART_Transmit("\t\t");
@@ -161,26 +166,32 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		program_int_counter++;
 		program_Hz_counter++;
 
-		if(mpu_complete == true && ((7 - program_last_counter) + program_int_counter) > 6){  //6x2=12ms For MS5611 Temp/Preasure Conv 7x2=14ms for guarantee
+		if(program_int_counter < program_last_counter){
+			program_int_counter = program_int_counter + program_last_counter;
+		}
+
+		if(mpu_complete == true && program_int_counter > 13){  //12ms For MS5611 Temp/Preasure Conv 13ms for guarantee
 			ms_ready = true;
 			mpu_ready = false;
 			mpu_complete = false;
 			program_last_counter = program_int_counter;
 		}
 
-		if(ms_complete == true){
+		if(ms_complete == true || (program_int_counter - program_last_counter) > 2){
 			mpu_ready= true;
 			ms_ready = false;
             ms_complete = false;
 		}
 
-		if(program_Hz_counter == 500){
+		if(program_Hz_counter == 1000){
 			mpu_Hz = mpu_Hz_counter;
+			ms_Hz  = ms_Hz_counter;
 			program_Hz_counter = 0;
 			mpu_Hz_counter = 0;
+			ms_Hz_counter  = 0;
 		}
 
-		if(program_int_counter == 7){
+		if(program_int_counter == 14){
 			program_int_counter = 0;
 		}
 
