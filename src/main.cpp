@@ -178,9 +178,9 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		}
 
 		if(ms_complete == true || (program_int_counter - program_last_counter) > 2){
-            mpu_ready= true;
-            ms_ready = false;
-            ms_complete = false;
+			mpu_ready= true;
+			ms_ready = false;
+			ms_complete = false;
 		}
 
 		if(program_Hz_counter == 1000){
