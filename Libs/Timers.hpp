@@ -100,6 +100,6 @@ class Timer_Base{
 	void PWM(uint8_t CH, uint8_t Pwm_mode);
 };
 
-void delay(int count);
+void delay(volatile uint32_t count);
 void reset_millis();
 uint32_t millis();
