@@ -38,7 +38,7 @@ void interrupt_init(){
 }
 
 uint8_t sayac=1, sayac2=0;
-uint32_t program_int_counter=0, program_last_counter=0, program_Hz_counter=0,
+uint32_t mpu_tick=0, ms_tick=0, hmc_tick=0, program_Hz_counter=0,
 		 mpu_Hz_counter=0, mpu_Hz=0, ms_Hz_counter=0, ms_Hz=0;
 
 bool ms_ready = true, ms_complete = false, mpu_ready = true, mpu_complete = false;
@@ -56,10 +56,9 @@ int main(void){
 	uint8_t clear_line[] = "\033[2K\r";
 
 	//MPU6050 Variables
-	int32_t acc_total_vec=0;
 	int16_t raw_gyro[3] = {0}, raw_accel[3] = {0};
-	float old_gyro_roll=0.0, old_gyro_pitch=0.0, gyro_pitch=0.0, gyro_roll=0.0, gyro_constant=0.0, acc_pitch=0.0, acc_roll=0.0;
-	float final_pitch=0.0, final_roll=0.0;
+	float32_t old_gyro_roll=0.0, old_gyro_pitch=0.0, gyro_pitch=0.0, gyro_roll=0.0, gyro_constant=0.0, acc_pitch=0.0, acc_roll=0.0, acc_total_vec_temp=0.0, acc_total_vec=0.0;
+	float32_t final_pitch=0.0, final_roll=0.0;
 	bool set_gyro_angles=false;
 
 	//MS5611 Variables
@@ -116,13 +115,15 @@ int main(void){
 			gyro_pitch += old_gyro_roll  * arm_sin_f32(raw_gyro[2] * (gyro_constant * RAD_TO_DEG));
 			gyro_roll  -= old_gyro_pitch * arm_sin_f32(raw_gyro[2] * (gyro_constant * RAD_TO_DEG));
 
-			acc_total_vec = sqrt((raw_accel[0]*raw_accel[0])+(raw_accel[1]*raw_accel[1])+(raw_accel[2]*raw_accel[2]));
-			acc_pitch = asin((float)raw_accel[1]/(float)acc_total_vec)* RAD_TO_DEG;
-			acc_roll  = asin((float)raw_accel[0]/(float)acc_total_vec)*-RAD_TO_DEG;
+			acc_total_vec_temp = (float32_t)(raw_accel[0]*raw_accel[0])+(raw_accel[1]*raw_accel[1])+(raw_accel[2]*raw_accel[2]);
+			arm_sqrt_f32(acc_total_vec_temp, &acc_total_vec);
+
+			acc_pitch = asin((float32_t)raw_accel[1]/(float32_t)acc_total_vec)* RAD_TO_DEG;
+			acc_roll  = asin((float32_t)raw_accel[0]/(float32_t)acc_total_vec)*-RAD_TO_DEG;
 
 			if(set_gyro_angles){
-				gyro_pitch = gyro_pitch * 0.96 + acc_pitch * 0.04;
-				gyro_roll  = gyro_roll  * 0.96 + acc_roll  * 0.04;
+				gyro_pitch = (gyro_pitch * 0.8) + (acc_pitch * 0.2);
+				gyro_roll  = (gyro_roll  * 0.8) + (acc_roll  * 0.2);
 			}
 			else{
 				set_gyro_angles = true;
@@ -134,7 +135,7 @@ int main(void){
 			final_roll  = gyro_roll ;
 
 			mpu_complete = true;
-			mpu_ready = false;
+			mpu_ready = !mpu_complete;
 		}
 
 		if(ms_ready == true){
@@ -142,7 +143,7 @@ int main(void){
 			ms5611.calculate_absolute_val(altitude);
 
 			ms_complete = true;
-			ms_ready = false;
+			ms_ready = !ms_complete;
 		}
 
 
@@ -163,24 +164,23 @@ int main(void){
 extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 	if(TIM14-> SR & 0x0001){
 		TIM14-> SR = 0;
-		program_int_counter++;
+		mpu_tick++;
+		ms_tick++;
+		hmc_tick++;
 		program_Hz_counter++;
 
-		if(program_int_counter < program_last_counter){
-			program_int_counter = program_int_counter + program_last_counter;
-		}
-
-		if(mpu_complete == true && program_int_counter >= 13){  //12ms For MS5611 Temp/Preasure Conv 13ms for guarantee
+		if(mpu_complete == true && ms_tick > 13){  //12ms For MS5611 Temp/Preasure Conv 13ms for guarantee
 			ms_ready = true;
 			mpu_ready = false;
 			mpu_complete = false;
-			program_last_counter = program_int_counter;
+			ms_tick = 0;
 		}
 
-		if(ms_complete == true || (program_int_counter - program_last_counter) > 2){
+		if(ms_complete == true && mpu_tick > 2){
 			mpu_ready= true;
 			ms_ready = false;
 			ms_complete = false;
+			mpu_tick = 0;
 		}
 
 		if(program_Hz_counter == 1000){
@@ -189,10 +189,6 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 			program_Hz_counter = 0;
 			mpu_Hz_counter = 0;
 			ms_Hz_counter  = 0;
-		}
-
-		if(program_int_counter == 14){
-			program_int_counter = 0;
 		}
 
 		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
