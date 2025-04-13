@@ -69,7 +69,7 @@ int main(void){
 	GPIO_init();
 	Program_timer();
 
-	USART_Base Serial(USART_6,115200);
+	USART_Base Serial(USART_6,9600);
 	Serial.USART_Transmit(motivation);
 	delay(1000);
 	Serial.USART_Transmit(clear_disp);
