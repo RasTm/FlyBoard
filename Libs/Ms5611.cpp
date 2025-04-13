@@ -97,6 +97,7 @@ void MS5611::calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *retu
 
 	//	alt = ((1.0 - (pow((return_val[0]/1013.25),0.1902949) )) * 44307.69396);
 		alt = (((pow((1013.25/return_val[0]),0.1902225603956629256229788852958))-1) * (return_val[1]+273.15)) / 0.0065;
+		conv_complete = false;
 	}
 }
 

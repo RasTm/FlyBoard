@@ -145,7 +145,7 @@ int main(void){
 			ms_ready = false;
 		}
 
-/*
+
 		Serial.USART_Transmit_float(final_roll,5);
 		Serial.USART_Transmit("\t\t");
 		Serial.USART_Transmit_float(final_pitch,5);
@@ -156,7 +156,7 @@ int main(void){
 		if(sayac2 == 5){
 			sayac2 = 0;
 			Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
-		}*/
+		}
 	}
 }
 
@@ -170,7 +170,7 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 			program_int_counter = program_int_counter + program_last_counter;
 		}
 
-		if(mpu_complete == true && program_int_counter > 13){  //12ms For MS5611 Temp/Preasure Conv 13ms for guarantee
+		if(mpu_complete == true && program_int_counter >= 13){  //12ms For MS5611 Temp/Preasure Conv 13ms for guarantee
 			ms_ready = true;
 			mpu_ready = false;
 			mpu_complete = false;
