@@ -94,8 +94,22 @@ class USART_Base{
 };
 
 template<typename T> void USART_Base::Transmit(T &value){
+	char buffer[32];
+
+    if (std::is_integral<T>::value) {
+        snprintf(buffer, sizeof(buffer), "%ld", static_cast<long>(value));
+    }
+    // Ondalýk türler (floating point types)
+    else if (std::is_floating_point<T>::value) {
+        snprintf(buffer, sizeof(buffer), "%.3f", static_cast<double>(value));
+    }
+
+	USART_Transmit((uint8_t*)buffer);
+}
+/*
+template<typename T> void USART_Base::Transmit(T &value){
 	std::stringstream ss;
 	ss << value;
 	std::string str = ss.str();
 	USART_Transmit(str.c_str());
-}
+}*/
