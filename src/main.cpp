@@ -69,7 +69,7 @@ int main(void){
 	GPIO_init();
 	Program_timer();
 
-	USART_Base Serial(USART_6,9600);
+	USART_Base Serial(USART_6,921600);
 	Serial.USART_Transmit(motivation);
 	delay(1000);
 	Serial.USART_Transmit(clear_disp);
@@ -178,10 +178,11 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 			ms_tick = 0;
 		}
 
-		if(ms_complete == true && mpu_tick > 2){
+		if(ms_complete == true || mpu_tick > 2){
 			mpu_ready= true;
 			ms_ready = false;
 			ms_complete = false;
+			mpu_tick = 0;
 		}
 
 		if(program_Hz_counter == 1000){
