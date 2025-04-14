@@ -85,7 +85,7 @@ class USART_Base{
 
 	template<typename T> void Transmit(T &value);
 	void USART_Transmit(uint8_t *data, uint16_t size);
-	void USART_Transmit(uint8_t *data);
+	void USART_Transmit(const uint8_t *data);
 	void USART_Transmit(const char *data);
 	void USART_Transmit_float(float data, uint8_t lenght);
 

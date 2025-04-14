@@ -19,7 +19,7 @@ void USART_Base::USART_Transmit(uint8_t *data, uint16_t size){
 	USARTx-> CR1 &= 0xFFFFFFF7; 			//USART Disable TX Mode Clear
 }
 
-void USART_Base::USART_Transmit(uint8_t *data){
+void USART_Base::USART_Transmit(const uint8_t *data){
 	USARTx-> CR1  = 0;						//Reset USART CR1 Register
 	USARTx-> CR1 |= 0x00002008;				//USART Enable TX Mode Set
 
