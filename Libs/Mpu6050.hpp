@@ -1,7 +1,6 @@
 #pragma once
 #include "I2C.hpp"
 #include "Timers.hpp"
-#include "math.h"
 
 #define RAD_TO_DEG 57.295779513082320876798154814105
 #define SAMPLE	1000
