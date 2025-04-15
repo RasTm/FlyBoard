@@ -16,6 +16,41 @@
 #include "../Libs/Ms5611.hpp"
 #include "../Libs/Hmc5883L.hpp"
 
+uint8_t sayac=1, sayac2=0;
+uint32_t mpu_Hz_counter=0, mpu_Hz=0, mpu_tick=0,
+		 ms_Hz_counter=0, ms_Hz=0, ms_tick=0,
+		 hmc_Hz_counter=0, hmc_Hz=0, hmc_tick=0,
+		 program_Hz_counter=0;
+
+
+bool ms_ready = true, ms_complete = false,
+	 mpu_ready = true, mpu_complete = false,
+	 hmc_ready = false, hmc_complete = false;
+
+const uint8_t project_header[]  = "Flyboard Pertinax v1.0\n\r";
+const uint8_t motivation[]	=
+		"\n\r*********************************************************"
+		"\n\r*  In The End, What Separates A Man From A Slave?       *"
+		"\n\r*  Money? Power? No.                                    *"
+		"\n\r*  A Man Chooses A Slave Obeys                          *"
+		"\n\r                                           <Andrew Ryan>*"
+		"\n\r*********************************************************";
+const uint8_t clear_disp[] = "\033[2J\033[H";
+const uint8_t clear_line[] = "\033[2K\r";
+
+//MPU6050 Variables
+int16_t raw_gyro[3] = {0}, raw_accel[3] = {0};
+uint32_t acc_total_vec=0;
+float old_gyro_roll=0.0, old_gyro_pitch=0.0, gyro_pitch=0.0, gyro_roll=0.0, acc_pitch=0.0, acc_roll=0.0, gyro_constant=0.0;
+float final_pitch=0.0, final_roll=0.0;
+bool set_gyro_angles=false;
+
+//MS5611 Variables
+double altitude = 0.0;
+
+//HMC5883L Variables
+float heading = 0.0;
+
 void GPIO_init(){
 	Set_Gpio(GPIOD,12,OUTPUT,PUSH,MED,NOT,SyS);
 	Set_Gpio(GPIOD,13,OUTPUT,PUSH,MED,NOT,SyS);
@@ -37,33 +72,7 @@ void interrupt_init(){
 	Set_Ext_Interrupt(0,GPIO_A,RISING);
 }
 
-uint8_t sayac=1, sayac2=0;
-uint32_t mpu_tick=0, ms_tick=0, program_Hz_counter=0,
-		 mpu_Hz_counter=0, mpu_Hz=0, ms_Hz_counter=0, ms_Hz=0;
-
-bool ms_ready = true, ms_complete = false, mpu_ready = true, mpu_complete = false;
-
 int main(void){
-	const uint8_t project_header[]  = "Flyboard Pertinax v1.0";
-	const uint8_t motivation[]	=
-			"\n\r*********************************************************"
-			"\n\r*  In The End, What Separates A Man From A Slave?       *"
-			"\n\r*  Money? Power? No.                                    *"
-			"\n\r*  A Man Chooses A Slave Obeys                          *"
-			"\n\r                                           <Andrew Ryan>*"
-			"\n\r*********************************************************";
-	uint8_t clear_disp[] = "\033[2J\033[H";
-	uint8_t clear_line[] = "\033[2K\r";
-
-	//MPU6050 Variables
-	int16_t raw_gyro[3] = {0}, raw_accel[3] = {0};
-	uint32_t acc_total_vec=0;
-	float old_gyro_roll=0.0, old_gyro_pitch=0.0, gyro_pitch=0.0, gyro_roll=0.0, gyro_constant=0.0, acc_pitch=0.0, acc_roll=0.0;
-	float final_pitch=0.0, final_roll=0.0;
-	bool set_gyro_angles=false;
-
-	//MS5611 Variables
-	double altitude = 0.0;
 
 	Clock_init();
 	GPIO_init();
@@ -75,6 +84,7 @@ int main(void){
 	Serial.USART_Transmit(clear_disp);
 	Serial.USART_Transmit(project_header);
 
+	Serial.USART_Transmit("MPU6050 Starting");
 	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL1);
 	mpu.config();
 	Serial.USART_Transmit("\n\rCalibrating...");
@@ -82,14 +92,20 @@ int main(void){
 	gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);                  //250 Hz Refresh rate
 	Serial.USART_Transmit("\033[2K\rCalibration Done Gyro Constant = ");
 	Serial.USART_Transmit_float(gyro_constant,8);
-	delay(1000);
-	Serial.USART_Transmit(clear_line);
+	delay(500);
+	Serial.USART_Transmit(clear_disp);
 
 	Serial.USART_Transmit("MS5611 Starting");
 	MS5611 ms5611(I2C1);
 	ms5611.get_coefficent();
 	Serial.USART_Transmit(clear_line);
-	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\n\r");
+
+	Serial.USART_Transmit("HMC5883L Starting");
+	HMC5883 hmc(I2C1);
+	hmc.config();
+	delay(50);
+	Serial.USART_Transmit(clear_line);
+	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\t\tHeading\n\r");
 
 	interrupt_init();
 
@@ -113,12 +129,12 @@ int main(void){
 			old_gyro_pitch = gyro_pitch;
 			old_gyro_roll  = gyro_roll;
 
-			gyro_pitch += old_gyro_roll  * sin(raw_gyro[2] * gyro_constant)*RAD_TO_DEG;
-			gyro_roll  -= old_gyro_pitch * sin(raw_gyro[2] * gyro_constant)*RAD_TO_DEG;
+			gyro_pitch += old_gyro_roll  * arm_sin_f32((raw_gyro[2] * gyro_constant)*RAD_TO_DEG);
+			gyro_roll  -= old_gyro_pitch * arm_sin_f32((raw_gyro[2] * gyro_constant)*RAD_TO_DEG);
 
 			acc_total_vec = sqrt((raw_accel[0]*raw_accel[0])+(raw_accel[1]*raw_accel[1])+(raw_accel[2]*raw_accel[2]));
-			acc_pitch = asin((float32_t)raw_accel[1]/(float32_t)acc_total_vec)* RAD_TO_DEG;
-			acc_roll  = asin((float32_t)raw_accel[0]/(float32_t)acc_total_vec)*-RAD_TO_DEG;
+			acc_pitch = asin((float)raw_accel[1]/(float)acc_total_vec)* RAD_TO_DEG;
+			acc_roll  = asin((float)raw_accel[0]/(float)acc_total_vec)*-RAD_TO_DEG;
 
 			if(set_gyro_angles){
 				gyro_pitch = (gyro_pitch * 0.8) + (acc_pitch * 0.2);
@@ -140,17 +156,24 @@ int main(void){
 		if(ms_ready == true){
 			ms_Hz_counter++;
 			ms5611.calculate_absolute_val(altitude);
-
 			ms_complete = true;
 			ms_ready = false;
 		}
 
+		if(hmc_ready == true){
+			hmc_Hz_counter++;
+			hmc.mag_conv(heading);
+			hmc_complete = true;
+			hmc_ready = false;
+		}
 
-		Serial.USART_Transmit_float(final_roll,5);
+		Serial.Transmit(final_roll);
 		Serial.USART_Transmit("\t\t");
-		Serial.USART_Transmit_float(final_pitch,5);
+		Serial.Transmit(final_pitch);
 		Serial.USART_Transmit("\t\t");
-		Serial.USART_Transmit_float(altitude,5);
+		Serial.Transmit(altitude);
+		Serial.USART_Transmit("\t\t");
+		Serial.Transmit(heading);
 		Serial.USART_Transmit("\t\t");
 		Serial.Transmit(mpu_Hz);
 		Serial.USART_Transmit("\t\t");
@@ -169,28 +192,47 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		TIM14-> SR = 0;
 		mpu_tick++;
 		ms_tick++;
+		hmc_tick++;
 		program_Hz_counter++;
 
-		if(mpu_complete == true && ms_tick > 13){  //12ms For MS5611 Temp/Preasure Conv 13ms for guarantee
+		if(mpu_complete == true && hmc_complete == true && ms_tick > 13){  //12ms For MS5611 Temp/Preasure Conv 13ms for guarantee
 			ms_ready = true;
+
 			mpu_ready = false;
 			mpu_complete = false;
+			hmc_ready = false;
+			hmc_complete = false;
 			ms_tick = 0;
 		}
 
-		if(ms_complete == true || mpu_tick > 2){
-			mpu_ready= true;
+		if((ms_complete == true && hmc_complete == true) || mpu_tick > 2){
+			mpu_ready = true;
+
 			ms_ready = false;
 			ms_complete = false;
+			hmc_ready = false;
+			hmc_complete = false;
 			mpu_tick = 0;
+		}
+
+		if(mpu_complete == true && ms_complete == true && hmc_tick > 6){
+			hmc_ready = true;
+
+			mpu_ready = false;
+			mpu_complete = false;
+			ms_ready = false;
+			ms_complete = false;
+			hmc_tick = 0;
 		}
 
 		if(program_Hz_counter == 1000){
 			mpu_Hz = mpu_Hz_counter;
 			ms_Hz  = ms_Hz_counter;
+			hmc_Hz = hmc_Hz_counter;
 			program_Hz_counter = 0;
 			mpu_Hz_counter = 0;
 			ms_Hz_counter  = 0;
+			hmc_Hz_counter = 0;
 		}
 
 		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
