@@ -99,7 +99,7 @@ template<typename T> void USART_Base::Transmit(T &value){
     if (std::is_integral<T>::value) {
         snprintf(buffer, sizeof(buffer), "%ld", static_cast<long>(value));
     }
-    // Ondalýk türler (floating point types)
+    //(floating point types)
     else if (std::is_floating_point<T>::value) {
         snprintf(buffer, sizeof(buffer), "%.3f", static_cast<double>(value));
     }
