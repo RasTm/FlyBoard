@@ -34,7 +34,7 @@ class I2C_Base{
 		}
 		else while(1);
 
-		I2Cx-> CR2 |= 42;									//Sonra düzeltilecek APB2_CLK yazılacak
+		I2Cx-> CR2 |= 42;									//APB2 Clock Speed
 		I2Cx-> OAR1|= own_i2c_addr;
 		I2Cx-> OAR1|= 0x4000;
 
