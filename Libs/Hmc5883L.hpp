@@ -8,7 +8,7 @@
 #define PI					3.14159265358979f
 #endif
 
-#define HMC_ADDR   0x3C
+#define HMC_ADDR   0x1A
 
 #define HMC_CONF_REG_A 0x00
 #define HMC_CONF_REG_B 0x01
@@ -28,7 +28,7 @@
 
 //CRA Bits
 //MA = Samples Averaged per Measurement Output
-#define MA_1       0x00           //1 (def)
+#define MA_1       0x00           //1 (default)
 #define MA_2       0x20           //2
 #define MA_4       0x40           //4
 #define MA_8       0x60           //8
@@ -38,7 +38,7 @@
 #define DO_1       0x04           //1.5
 #define DO_2       0x08           //3
 #define DO_3       0x0C           //7.5
-#define DO_4       0x10           //15 (def)
+#define DO_4       0x10           //15 (default)
 #define DO_5       0x14           //30
 #define DO_6       0x18           //75
 
@@ -50,7 +50,7 @@
 //CRB Bits
 //GN = Gain Control Bits
 #define GN_0       0x00           // +- 0.88 Ga (1370 LSB/Gauss) (0.73 mG/LSB)
-#define GN_1       0x20           // +- 1.3  Ga (1090 LSB/Gauss) (0.92 mG/LSB) (def)
+#define GN_1       0x20           // +- 1.3  Ga (1090 LSB/Gauss) (0.92 mG/LSB) (default)
 #define GN_2       0x40           // +- 1.9  Ga (820  LSB/Gauss) (1.22 mG/LSB)
 #define GN_3       0x60           // +- 2.5  GA (660  LSB/Gauss) (1.52 mg/LSB)
 #define GN_4       0x80           // +- 4.0  GA (440  LSB/Gauss) (2.27 mg/LSB)
@@ -61,7 +61,7 @@
 //Mode Reg Bits
 //MD = Mode Select
 #define MD_0_CONT  0x00           //Continuous Measurement Mode
-#define MD_1_SING  0x01           //Single Measurement Mode (def)
+#define MD_1_SING  0x01           //Single Measurement Mode (default)
 
 class HMC5883 : public I2C_Base{
 	public:
