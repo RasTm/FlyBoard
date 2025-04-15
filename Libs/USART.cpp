@@ -45,6 +45,12 @@ void USART_Base::USART_Transmit(const char *data){
 	USARTx-> CR1 &= 0xFFFFFFF7; 			//USART Disable TX Mode Clear
 }
 
+/**
+  * @brief  This method allows you to send float data through USART interface.
+  * @param  data: This variable is your float data.
+  * @param  lenght: This variable is your length of data in digits.
+  * @retval
+  */
 void USART_Base::USART_Transmit_float(float data, uint8_t length){
 	char string_num[length];
 	snprintf(string_num, length+1, "%f", data);
