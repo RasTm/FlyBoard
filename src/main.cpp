@@ -195,7 +195,7 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		hmc_tick++;
 		program_Hz_counter++;
 
-		if(mpu_complete == true && hmc_complete == true && ms_tick > 13){  //12ms For MS5611 Temp/Preasure Conv 13ms for guarantee
+		if(mpu_complete == true && hmc_complete == true && ms_tick > 12){  //11ms For MS5611 Temp/Preasure Conv 12ms for guarantee
 			ms_ready = true;
 
 			mpu_ready = false;
