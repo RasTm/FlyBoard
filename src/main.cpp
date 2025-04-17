@@ -18,19 +18,18 @@
 #include "../Libs/Hmc5883L.hpp"
 
 #define PROG_BUFF_SIZE 12
+#define MPU_FLAG 1
+#define MS_FLAG  2
+#define HMC_FLAG 3
 
 uint8_t *program_buffer = (uint8_t*) calloc(PROG_BUFF_SIZE, sizeof(uint8_t));
-uint8_t *writer;
+uint8_t *writer = program_buffer;
 
-uint8_t sayac=1, sayac2=0;
+uint8_t sayac=1, sayac2=0, buffer_index = 0;
 uint32_t mpu_Hz_counter=0, mpu_Hz=0, mpu_tick=0,
 		 ms_Hz_counter=0, ms_Hz=0, ms_tick=0,
 		 hmc_Hz_counter=0, hmc_Hz=0, hmc_tick=0,
 		 program_Hz_counter=0;
-
-bool ms_ready = true, ms_complete = false,
-	 mpu_ready = true, mpu_complete = false,
-	 hmc_ready = false, hmc_complete = false;
 
 const uint8_t project_header[]  = "Flyboard Pertinax v1.0\n\r";
 const uint8_t motivation[]	=
@@ -114,7 +113,11 @@ int main(void){
 	interrupt_init();
 
 	while (1){
-		if(mpu_ready == true){
+		if(program_buffer == ){
+			program_buffer++;
+		}
+
+		if(*program_buffer == 1){
 			mpu_Hz_counter++;
 			mpu.get_gyro(raw_gyro);
 			mpu.get_accel(raw_accel);
@@ -152,23 +155,16 @@ int main(void){
 
 			final_pitch = gyro_pitch;
 			final_roll  = gyro_roll ;
-
-			mpu_complete = true;
-			mpu_ready = false;
 		}
 
-		if(ms_ready == true){
+		if(){
 			ms_Hz_counter++;
 			ms5611.calculate_absolute_val(altitude);
-			ms_complete = true;
-			ms_ready = false;
 		}
 
-		if(hmc_ready == true){
+		if(){
 			hmc_Hz_counter++;
 			hmc.mag_conv(heading);
-			hmc_complete = true;
-			hmc_ready = false;
 		}
 
 		Serial.Transmit(final_roll);
@@ -199,34 +195,29 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		hmc_tick++;
 		program_Hz_counter++;
 
-		if(mpu_complete == true && hmc_complete == true && ms_tick > 12){  //11ms For MS5611 Temp/Preasure Conv 12ms for guarantee
-			ms_ready = true;
-
-			mpu_ready = false;
-			mpu_complete = false;
-			hmc_ready = false;
-			hmc_complete = false;
-			ms_tick = 0;
-		}
-
-		if((ms_complete == true && hmc_complete == true) || mpu_tick > 2){
-			mpu_ready = true;
-
-			ms_ready = false;
-			ms_complete = false;
-			hmc_ready = false;
-			hmc_complete = false;
+		if(mpu_tick > 2){
 			mpu_tick = 0;
+			if(buffer_index < 12){
+				buffer_index++;
+				if(*writer == 0){ *(writer+buffer_index) = MPU_FLAG; }
+			}
+			else{}
 		}
-
-		if(mpu_complete == true && ms_complete == true && hmc_tick > 6){
-			hmc_ready = true;
-
-			mpu_ready = false;
-			mpu_complete = false;
-			ms_ready = false;
-			ms_complete = false;
+		if(ms_tick > 11){
+			ms_tick = 0;
+			if(buffer_index < 12){
+				buffer_index++;
+				if(*writer == 0){ *(writer+buffer_index) = MS_FLAG; }
+			}
+			else{}
+		}
+		if(hmc_tick > 6){
 			hmc_tick = 0;
+			if(buffer_index < 12){
+				buffer_index++;
+				if(*writer == 0){ *(writer+buffer_index) = HMC_FLAG; }
+			}
+			else{}
 		}
 
 		if(program_Hz_counter == 1000){
@@ -238,7 +229,6 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 			ms_Hz_counter  = 0;
 			hmc_Hz_counter = 0;
 		}
-
 		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
 	}
 }}
