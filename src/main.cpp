@@ -7,6 +7,7 @@
 
 #include "stm32f4xx.h"
 #include "arm_math.h"
+#include "stdlib.h"
 
 #include "../Libs/RCC.hpp"
 #include "../Libs/GPIO.hpp"
@@ -16,12 +17,16 @@
 #include "../Libs/Ms5611.hpp"
 #include "../Libs/Hmc5883L.hpp"
 
+#define PROG_BUFF_SIZE 12
+
+uint8_t *program_buffer = (uint8_t*) calloc(PROG_BUFF_SIZE, sizeof(uint8_t));
+uint8_t *writer;
+
 uint8_t sayac=1, sayac2=0;
 uint32_t mpu_Hz_counter=0, mpu_Hz=0, mpu_tick=0,
 		 ms_Hz_counter=0, ms_Hz=0, ms_tick=0,
 		 hmc_Hz_counter=0, hmc_Hz=0, hmc_tick=0,
 		 program_Hz_counter=0;
-
 
 bool ms_ready = true, ms_complete = false,
 	 mpu_ready = true, mpu_complete = false,
@@ -73,7 +78,6 @@ void interrupt_init(){
 }
 
 int main(void){
-
 	Clock_init();
 	GPIO_init();
 	Program_timer();
