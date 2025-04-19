@@ -3,49 +3,6 @@
 /**
   * @brief  This method allows you to transmit data through USART interface.
   * @param  data: This variable is what do you want to be transmit.
-  * @retval
-  *//*
-template <typename T> void USART_Base::USART_Transmit(std::vector<T> &data){
-
-	uint8_t data_size = sizeof(data[0]);
-
-	USARTx-> CR1  = 0;							//Reset USART CR1 Register
-	USARTx-> CR1 |= 0x00002008;					//USART Enable TX Mode Set
-
-	if(data_size == 1){
-		for(T Usart_data : data){
-			while(!(USARTx-> SR & 0x0000080));	//Check TXE bit
-			USARTx-> DR = Usart_data;
-		}
-	}
-	else if(data_size == 2){
-		for(T Usart_data : data){
-			while(!(USARTx-> SR & 0x00000080)); //Check TXE bit
-			USARTx-> DR = (Usart_data & 0x00FF);
-			while(!(USARTx-> SR & 0x00000080)); //Check TXE bit
-			USARTx-> DR = (Usart_data & 0xFF00);
-		}
-	}
-	else if(data_size == 4){
-		for(T Usart_data : data){
-			while(!(USARTx-> SR & 0x00000080)); //Check TXE bit
-			USARTx-> DR = (Usart_data & 0x000000FF);
-			while(!(USARTx-> SR & 0x00000080)); //Check TXE bit
-			USARTx-> DR = (Usart_data & 0x0000FF00);
-			while(!(USARTx-> SR & 0x00000080)); //Check TXE bit
-			USARTx-> DR = (Usart_data & 0x00FF0000);
-			while(!(USARTx-> SR & 0x00000080)); //Check TXE bit
-			USARTx-> DR = (Usart_data & 0xFF000000);
-		}
-	}
-
-	while(!(USARTx-> SR & 0x000000040));	//Wait Until Transmission Complete Bit Set
-	USARTx-> CR1 &= 0xFFFFFFF7; 			//USART Disable TX Mode Clear
-}
-*/
-/**
-  * @brief  This method allows you to transmit data through USART interface.
-  * @param  data: This variable is what do you want to be transmit.
   * @param  size: This variable holds how many data do you want to transmit.
   * @retval
   */
@@ -62,7 +19,7 @@ void USART_Base::USART_Transmit(uint8_t *data, uint16_t size){
 	USARTx-> CR1 &= 0xFFFFFFF7; 			//USART Disable TX Mode Clear
 }
 
-void USART_Base::USART_Transmit(uint8_t *data){
+void USART_Base::USART_Transmit(const uint8_t *data){
 	USARTx-> CR1  = 0;						//Reset USART CR1 Register
 	USARTx-> CR1 |= 0x00002008;				//USART Enable TX Mode Set
 
@@ -75,7 +32,7 @@ void USART_Base::USART_Transmit(uint8_t *data){
 	USARTx-> CR1 &= 0xFFFFFFF7; 			//USART Disable TX Mode Clear
 }
 
-void USART_Base::USART_Transmit(char *data){
+void USART_Base::USART_Transmit(const char *data){
 	USARTx-> CR1  = 0;						//Reset USART CR1 Register
 	USARTx-> CR1 |= 0x00002008;				//USART Enable TX Mode Set
 
@@ -88,6 +45,12 @@ void USART_Base::USART_Transmit(char *data){
 	USARTx-> CR1 &= 0xFFFFFFF7; 			//USART Disable TX Mode Clear
 }
 
+/**
+  * @brief  This method allows you to send float data through USART interface.
+  * @param  data: This variable is your float data.
+  * @param  lenght: This variable is your length of data in digits.
+  * @retval
+  */
 void USART_Base::USART_Transmit_float(float data, uint8_t length){
 	char string_num[length];
 	snprintf(string_num, length+1, "%f", data);

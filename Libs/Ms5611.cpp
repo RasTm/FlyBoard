@@ -42,8 +42,6 @@ void MS5611::get_coefficent(){
   * @retval
   */
 void MS5611::get_raw_data(){
-
-	uint8_t Raw_val[3] = {0,0,0};
 	if(counter == 0){
 		write_byte_small(MS_ADDR, d1_selection);		//Pressure Conversion
 		counter++;
@@ -51,6 +49,7 @@ void MS5611::get_raw_data(){
 		goto finish;
 	}
 	if(counter == 1){
+		uint8_t Raw_val[3] = {0,0,0};
 		write_byte_small(MS_ADDR, MS_ADC_READ);
 		multi_byte_read_small(MS_ADDR, Raw_val, 3);
 		raw_preasure = ((Raw_val[0]<<16)+(Raw_val[1]<<8)+Raw_val[2]);
@@ -61,8 +60,8 @@ void MS5611::get_raw_data(){
 		//delay(11);
 		goto finish;
 	}
-
 	if(counter == 2){
+		uint8_t Raw_val[3] = {0,0,0};
 		write_byte_small(MS_ADDR, MS_ADC_READ);
 		multi_byte_read_small(MS_ADDR, Raw_val, 3);
 		raw_temp = ((Raw_val[0]<<16)+(Raw_val[1]<<8)+Raw_val[2]);
@@ -97,6 +96,7 @@ void MS5611::calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *retu
 
 	//	alt = ((1.0 - (pow((return_val[0]/1013.25),0.1902949) )) * 44307.69396);
 		alt = (((pow((1013.25/return_val[0]),0.1902225603956629256229788852958))-1) * (return_val[1]+273.15)) / 0.0065;
+		conv_complete = false;
 	}
 }
 
@@ -125,11 +125,8 @@ void MS5611::calculate_absolute_val(double *return_val, double &alt){
  * @brief Same method as calculate_absolute_val() but it dont return preasure and temp values
  */
 void MS5611::calculate_absolute_val(double &alt){
-	if(conv_complete != true){
-		get_raw_data();
-	}
-
-	else{
+	if(conv_complete == false){get_raw_data();}
+	if(conv_complete == true){
 		int32_t dT   = raw_temp-(coeff_data[4]*256);
 		int32_t TEMP = 2000+(((int64_t)dT*coeff_data[5])/8388608);
 

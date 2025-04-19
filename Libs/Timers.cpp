@@ -75,5 +75,5 @@ uint32_t millis(){
   */
 extern "C" {void SysTick_Handler(void){
 	if(Systick_counter >= 0){Systick_counter--;}
-	ms++;
+	ms = SysTick-> VAL;
 }}
