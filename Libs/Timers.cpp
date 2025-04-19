@@ -1,7 +1,7 @@
 #include "Timers.hpp"
 
 uint32_t ms = 0;
-uint32_t Systick_counter = 0;
+volatile uint32_t Systick_counter = 0;
 
 /**
   * @brief  This method allows you to start timer counter.
@@ -57,7 +57,7 @@ void Timer_Base::PWM(uint8_t CH, uint8_t Pwm_mode){
   * @param  count: This variable holds your delay time. (unit milliseconds)
   * @retval
   */
-void delay(int count){
+void delay(volatile uint32_t count){
 	Systick_counter = count;
 	while(Systick_counter != 0);
 }
