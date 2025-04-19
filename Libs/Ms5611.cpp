@@ -81,10 +81,8 @@ void MS5611::get_raw_data(){
   * @retval
   */
 void MS5611::calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *return_val, double &alt){
-	if(conv_complete != true){
-		get_raw_data();
-	}
-	else{
+	if(conv_complete == false){get_raw_data();}
+	if(conv_complete == true){
 		int32_t dT   = raw_temp-(coeff[4]*256);
 		int32_t TEMP = 2000+(((int64_t)dT*coeff[5])/8388608);
 
@@ -101,11 +99,8 @@ void MS5611::calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *retu
 }
 
 void MS5611::calculate_absolute_val(double *return_val, double &alt){
-	if(conv_complete != true){
-		get_raw_data();
-	}
-
-	else{
+	if(conv_complete == false){get_raw_data();}
+	if(conv_complete == true){
 		int32_t dT   = raw_temp-(coeff_data[4]*256);
 		int32_t TEMP = 2000+(((int64_t)dT*coeff_data[5])/8388608);
 
