@@ -22,10 +22,14 @@
 #define MS_FLAG  2
 #define HMC_FLAG 3
 
-uint8_t *program_buffer = (uint8_t*) calloc(PROG_BUFF_SIZE, sizeof(uint8_t));
-uint8_t *writer = program_buffer;
+//uint8_t *program_buffer = (uint8_t*) calloc(PROG_BUFF_SIZE, sizeof(uint8_t));
+//uint8_t *writer = program_buffer;
+//const uint8_t *head = program_buffer;
 
-uint8_t sayac=1, sayac2=0, buffer_index = 0;
+uint8_t program_buffer[PROG_BUFF_SIZE] = {0}, write_index = 0, read_index = 0;
+
+
+uint8_t sayac=1, sayac2=0;
 uint32_t mpu_Hz_counter=0, mpu_Hz=0, mpu_tick=0,
 		 ms_Hz_counter=0, ms_Hz=0, ms_tick=0,
 		 hmc_Hz_counter=0, hmc_Hz=0, hmc_tick=0,
@@ -53,7 +57,7 @@ bool set_gyro_angles=false;
 double altitude = 0.0;
 
 //HMC5883L Variables
-float heading = 0.0;
+float heading_degree = 0.0;
 
 void GPIO_init(){
 	Set_Gpio(GPIOD,12,OUTPUT,PUSH,MED,NOT,SyS);
@@ -113,11 +117,10 @@ int main(void){
 	interrupt_init();
 
 	while (1){
-		if(program_buffer == ){
-			program_buffer++;
-		}
+		if(read_index == PROG_BUFF_SIZE-1){ read_index = 0;}
+		read_index++;
 
-		if(*program_buffer == 1){
+		if(program_buffer[read_index] == MPU_FLAG){
 			mpu_Hz_counter++;
 			mpu.get_gyro(raw_gyro);
 			mpu.get_accel(raw_accel);
@@ -157,32 +160,34 @@ int main(void){
 			final_roll  = gyro_roll ;
 		}
 
-		if(){
+		if(program_buffer[read_index] == MS_FLAG){
 			ms_Hz_counter++;
 			ms5611.calculate_absolute_val(altitude);
 		}
 
-		if(){
+		if(program_buffer[read_index] == HMC_FLAG){
 			hmc_Hz_counter++;
-			hmc.mag_conv(heading);
+			hmc.mag_conv(heading_degree);
 		}
 
-		Serial.Transmit(final_roll);
-		Serial.USART_Transmit("\t\t");
-		Serial.Transmit(final_pitch);
-		Serial.USART_Transmit("\t\t");
-		Serial.Transmit(altitude);
-		Serial.USART_Transmit("\t\t");
-		Serial.Transmit(heading);
-		Serial.USART_Transmit("\t\t");
-		Serial.Transmit(mpu_Hz);
-		Serial.USART_Transmit("\t\t");
-		Serial.Transmit(ms_Hz);
-		Serial.USART_Transmit("\n\r");
-		sayac2++;
-		if(sayac2 == 5){
-			sayac2 = 0;
-			Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
+		if(program_buffer[read_index] == 0){
+			Serial.Transmit(final_roll);
+			Serial.USART_Transmit("\t\t");
+			Serial.Transmit(final_pitch);
+			Serial.USART_Transmit("\t\t");
+			Serial.Transmit(altitude);
+			Serial.USART_Transmit("\t\t");
+			Serial.Transmit(heading_degree);
+			Serial.USART_Transmit("\t\t");
+			Serial.Transmit(mpu_Hz);
+			Serial.USART_Transmit("\t\t");
+			Serial.Transmit(ms_Hz);
+			Serial.USART_Transmit("\n\r");
+			sayac2++;
+			if(sayac2 == 5){
+				sayac2 = 0;
+				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
+			}
 		}
 	}
 }
@@ -195,29 +200,28 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		hmc_tick++;
 		program_Hz_counter++;
 
+		if(write_index == 11){ write_index = 0;}
+
 		if(mpu_tick > 2){
 			mpu_tick = 0;
-			if(buffer_index < 12){
-				buffer_index++;
-				if(*writer == 0){ *(writer+buffer_index) = MPU_FLAG; }
+			if(write_index < 12){
+				write_index++;
+				program_buffer[write_index] = MPU_FLAG;
 			}
-			else{}
 		}
 		if(ms_tick > 11){
 			ms_tick = 0;
-			if(buffer_index < 12){
-				buffer_index++;
-				if(*writer == 0){ *(writer+buffer_index) = MS_FLAG; }
+			if(write_index < 12){
+				write_index++;
+				program_buffer[write_index] = MS_FLAG;
 			}
-			else{}
 		}
 		if(hmc_tick > 6){
 			hmc_tick = 0;
-			if(buffer_index < 12){
-				buffer_index++;
-				if(*writer == 0){ *(writer+buffer_index) = HMC_FLAG; }
+			if(write_index < 12){
+				write_index++;
+				program_buffer[write_index] = HMC_FLAG;
 			}
-			else{}
 		}
 
 		if(program_Hz_counter == 1000){
