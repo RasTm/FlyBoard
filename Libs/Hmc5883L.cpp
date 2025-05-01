@@ -13,6 +13,7 @@ void HMC5883::mag_read(uint16_t *data){
 	data[0] = ((pre_data[0]<<8) + pre_data[1]);
 	data[1] = ((pre_data[2]<<8) + pre_data[3]);
 	data[2] = ((pre_data[4]<<8) + pre_data[5]);
+	write_byte_small(HMC_ADDR,HMC_DATA_X_MSB);
 }
 
 void HMC5883::mag_conv(float &heading_deg){
@@ -23,8 +24,7 @@ void HMC5883::mag_conv(float &heading_deg){
 	axis_mag[1] = (float)(raw_data[1]*gain_val);
 	axis_mag[2] = (float)(raw_data[2]*gain_val);
 
-	float heading = atan2f(axis_mag[1],axis_mag[2]);
-	heading += DEC_ANGLE;
+	float heading = (atan2f(axis_mag[1],axis_mag[2])) + DEC_ANGLE;
 
 	if(heading < 0) heading += 2*PI;
 	if(heading > 2*PI) heading -= 2*PI;
