@@ -20,11 +20,11 @@ void HMC5883::mag_conv(float &heading_deg){
 	float axis_mag[3] = {0};
 	uint16_t raw_data[3] = {0};
 	mag_read(raw_data);
-	axis_mag[0] = (float)(raw_data[0]*gain_val);
-	axis_mag[1] = (float)(raw_data[1]*gain_val);
-	axis_mag[2] = (float)(raw_data[2]*gain_val);
+	axis_mag[0] = (float)(raw_data[0]*gain_val);                          // X axis
+	axis_mag[1] = (float)(raw_data[1]*gain_val);                          // Z axis
+	axis_mag[2] = (float)(raw_data[2]*gain_val);                          // Y axis
 
-	float heading = (atan2f(axis_mag[1],axis_mag[2])) + DEC_ANGLE;
+	float heading = (atan2f(axis_mag[2],axis_mag[0])) + DEC_ANGLE;
 
 	if(heading < 0) heading += 2*PI;
 	if(heading > 2*PI) heading -= 2*PI;
