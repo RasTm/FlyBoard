@@ -15,18 +15,14 @@
 #include "../Libs/USART.hpp"
 #include "../Libs/Mpu6050.hpp"
 #include "../Libs/Ms5611.hpp"
-#include "../Libs/Hmc5883L.hpp"
+#include "../Libs/Qmc5883L.hpp"
 
 #define PROG_BUFF_SIZE 12
 #define MPU_FLAG 1
 #define MS_FLAG  2
 #define HMC_FLAG 3
 
-//uint8_t *program_buffer = (uint8_t*) calloc(PROG_BUFF_SIZE, sizeof(uint8_t));
-//uint8_t *writer = program_buffer;
-//const uint8_t *head = program_buffer;
-
-uint8_t program_buffer[PROG_BUFF_SIZE] = {0}, write_index = 0, read_index = 0;
+uint8_t program_buffer[PROG_BUFF_SIZE] = {0}, write_index = 0, read_index = 0, buffer_write_able = true;
 
 
 uint8_t sayac=1, sayac2=0;
@@ -108,17 +104,17 @@ int main(void){
 	Serial.USART_Transmit(clear_line);
 
 	Serial.USART_Transmit("HMC5883L Starting");
-	HMC5883 hmc(I2C1);
+	QMC5883 hmc(I2C1);
 	hmc.config();
 	delay(50);
 	Serial.USART_Transmit(clear_line);
-	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\t\tHeading\n\r");
+	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\tHeading\tMPU Hz\tMS Hz\n\r");
 
 	interrupt_init();
 
 	while (1){
-		if(read_index == PROG_BUFF_SIZE-1){ read_index = 0;}
-		read_index++;
+		if(program_buffer[read_index] != 0){read_index++;}
+		if(read_index == PROG_BUFF_SIZE){ read_index = 0;}
 
 		if(program_buffer[read_index] == MPU_FLAG){
 			mpu_Hz_counter++;
@@ -170,7 +166,7 @@ int main(void){
 			hmc.mag_conv(heading_degree);
 		}
 
-		if(program_buffer[read_index] == 0){
+		if(read_index % 2 == 0){
 			Serial.Transmit(final_roll);
 			Serial.USART_Transmit("\t\t");
 			Serial.Transmit(final_pitch);
@@ -178,9 +174,9 @@ int main(void){
 			Serial.Transmit(altitude);
 			Serial.USART_Transmit("\t\t");
 			Serial.Transmit(heading_degree);
-			Serial.USART_Transmit("\t\t");
+			Serial.USART_Transmit("\t");
 			Serial.Transmit(mpu_Hz);
-			Serial.USART_Transmit("\t\t");
+			Serial.USART_Transmit("\t");
 			Serial.Transmit(ms_Hz);
 			Serial.USART_Transmit("\n\r");
 			sayac2++;
@@ -189,6 +185,7 @@ int main(void){
 				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
 			}
 		}
+
 	}
 }
 
@@ -200,27 +197,33 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		hmc_tick++;
 		program_Hz_counter++;
 
-		if(write_index == 11){ write_index = 0;}
+		if(write_index == 11 && read_index < PROG_BUFF_SIZE){
+			write_index = 0;
+			buffer_write_able = false;
+		}
+		else{buffer_write_able = true;}
 
-		if(mpu_tick > 2){
-			mpu_tick = 0;
-			if(write_index < 12){
-				write_index++;
-				program_buffer[write_index] = MPU_FLAG;
+		if(buffer_write_able == true){
+			if(mpu_tick > 2){
+				mpu_tick = 0;
+				if(write_index < 12){
+					program_buffer[write_index] = MPU_FLAG;
+					write_index++;
+				}
 			}
-		}
-		if(ms_tick > 11){
-			ms_tick = 0;
-			if(write_index < 12){
-				write_index++;
-				program_buffer[write_index] = MS_FLAG;
+			if(ms_tick > 11){
+				ms_tick = 0;
+				if(write_index < 12){
+					program_buffer[write_index] = MS_FLAG;
+					write_index++;
+				}
 			}
-		}
-		if(hmc_tick > 6){
-			hmc_tick = 0;
-			if(write_index < 12){
-				write_index++;
-				program_buffer[write_index] = HMC_FLAG;
+			if(hmc_tick > 6){
+				hmc_tick = 0;
+				if(write_index < 12){
+					program_buffer[write_index] = HMC_FLAG;
+					write_index++;
+				}
 			}
 		}
 
