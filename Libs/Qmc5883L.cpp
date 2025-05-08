@@ -2,9 +2,9 @@
 #include "math.h"
 
 void QMC5883::config(){
-	write_byte(QMC_ADDR, QMC_CONF_REG_1, data_reg);
 	write_byte(QMC_ADDR, QMC_SET_RESET, 1);
-	write_byte(QMC_ADDR, QMC_CONF_REG_2, ROLL_PTR_EN);
+	write_byte(QMC_ADDR, QMC_CONF_REG_1, data_reg);
+	write_byte(QMC_ADDR, QMC_CONF_REG_2, (ROLL_PTR_EN | INT_DIS));
 }
 
 void QMC5883::mag_read(uint16_t *data){
@@ -13,7 +13,6 @@ void QMC5883::mag_read(uint16_t *data){
 	data[0] = (pre_data[0] + (pre_data[1]<<8));
 	data[1] = (pre_data[2] + (pre_data[3]<<8));
 	data[2] = (pre_data[4] + (pre_data[5]<<8));
-	//	write_byte_small(QMC_ADDR,QMC_DATA_X_LSB);
 }
 
 void QMC5883::mag_conv(float &heading_deg){
@@ -32,3 +31,8 @@ void QMC5883::mag_conv(float &heading_deg){
 	heading_deg = heading * RAD_TO_DEG;
 }
 
+bool QMC5883::read_able(){
+	uint8_t status = 0;
+	read_byte(QMC_ADDR, QMC_STATUS_REG, &status);
+    return (status &= 1);
+}
