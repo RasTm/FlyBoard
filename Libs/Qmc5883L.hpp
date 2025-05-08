@@ -30,8 +30,8 @@
 #define QMC_SET_RESET  0x0B
 //CA1 Register
 //MD = Mode Select
-#define MD_0_CONT  0x00           //Standby (default)
-#define MD_1_SING  0x01           //Continuous Measurement Mode
+#define MD_0_SING  0x00           //Standby (default)
+#define MD_1_CONT  0x01           //Continuous Measurement Mode
 
 //DO = Data Output Rate (Hz)
 #define DO_0       0x00<<2        //10 Hz
@@ -51,6 +51,7 @@
 
 //CA2 Register
 #define INT_EN      0
+#define INT_DIS     1
 #define ROLL_PTR_EN 1<<6
 #define SOFT_RESET  1<<7
 
@@ -66,4 +67,5 @@ class QMC5883 : public I2C_Base{
 	void config();
 	void mag_read(uint16_t *data);
 	void mag_conv(float &heading_deg);
+	bool read_able();
 };
