@@ -161,7 +161,7 @@ int main(void){
 			ms5611.calculate_absolute_val(altitude);
 		}
 
-		if(program_buffer[read_index] == HMC_FLAG){
+		if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
 			hmc_Hz_counter++;
 			hmc.mag_conv(heading_degree);
 		}
