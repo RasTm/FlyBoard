@@ -2,13 +2,13 @@
 #include "I2C.hpp"
 
 #define RAD_TO_DEG 57.295779513082320876798154814105
-#define DEC_ANGLE (6.0 + (14.0/60.0)) / (57.295779513082320876798154814105)
+#define DEC_ANGLE (6.0 + (7.0/60.0)) / (57.295779513082320876798154814105)  //For Ankara Declination Angle is +6 degree 7 minutes
 
 #ifndef PI
 #define PI					3.14159265358979f
 #endif
 
-#define HMC_ADDR   0x1A
+#define HMC_ADDR   0x3C
 
 #define HMC_CONF_REG_A 0x00
 #define HMC_CONF_REG_B 0x01
@@ -16,10 +16,10 @@
 
 #define HMC_DATA_X_MSB 0x03
 #define HMC_DATA_X_LSB 0x04
-#define HMC_DATA_Y_MSB 0x05
-#define HMC_DATA_Y_LSB 0x06
-#define HMC_DATA_Z_MSB 0x07
-#define HMC_DATA_Z_LSB 0x08
+#define HMC_DATA_Z_MSB 0x05
+#define HMC_DATA_Z_LSB 0x06
+#define HMC_DATA_Y_MSB 0x07
+#define HMC_DATA_Y_LSB 0x08
 
 #define HMC_STATUS_REG 0x09
 #define HMC_ID_REG_A   0x0A
