@@ -15,7 +15,11 @@
 #include "../Libs/USART.hpp"
 #include "../Libs/Mpu6050.hpp"
 #include "../Libs/Ms5611.hpp"
+<<<<<<< HEAD
 //#include "../Libs/Qmc5883L.hpp"
+=======
+#include "../Libs/Qmc5883L.hpp"
+>>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 
 #define PROG_BUFF_SIZE 12
 #define MPU_FLAG 1
@@ -24,6 +28,10 @@
 
 uint8_t program_buffer[PROG_BUFF_SIZE] = {0}, write_index = 0, read_index = 0, buffer_write_able = true;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 uint8_t sayac=1, sayac2=0;
 uint32_t mpu_Hz_counter=0, mpu_Hz=0, mpu_tick=0,
 		 ms_Hz_counter=0, ms_Hz=0, ms_tick=0,
@@ -94,11 +102,24 @@ int main(void){
 	delay(500);
 	Serial.USART_Transmit(clear_disp);
 
+<<<<<<< HEAD
 //	Serial.USART_Transmit("HMC5883L Starting");
 //	QMC5883 hmc(I2C1);
 //	hmc.config();
 //	delay(50);
 //	Serial.USART_Transmit(clear_line);
+=======
+	Serial.USART_Transmit("MS5611 Starting");
+	MS5611 ms5611(I2C1);
+	ms5611.get_coefficent();
+	Serial.USART_Transmit(clear_line);
+
+	Serial.USART_Transmit("HMC5883L Starting");
+	QMC5883 hmc(I2C1);
+	hmc.config();
+	delay(50);
+	Serial.USART_Transmit(clear_line);
+>>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\tHeading\tMPU Hz\tMS Hz\n\r");
 
 	interrupt_init();
@@ -152,6 +173,7 @@ int main(void){
 			ms5611.calculate_absolute_val(altitude);
 		}
 
+<<<<<<< HEAD
 //		if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
 //			hmc_Hz_counter++;
 //			hmc.mag_conv(heading_degree);
@@ -177,6 +199,33 @@ int main(void){
 			}
 		}
 
+=======
+		if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
+			hmc_Hz_counter++;
+			hmc.mag_conv(heading_degree);
+		}
+
+		if(read_index % 2 == 0){
+			Serial.Transmit(final_roll);
+			Serial.USART_Transmit("\t\t");
+			Serial.Transmit(final_pitch);
+			Serial.USART_Transmit("\t\t");
+			Serial.Transmit(altitude);
+			Serial.USART_Transmit("\t\t");
+			Serial.Transmit(heading_degree);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(mpu_Hz);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(ms_Hz);
+			Serial.USART_Transmit("\n\r");
+			sayac2++;
+			if(sayac2 == 5){
+				sayac2 = 0;
+				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
+			}
+		}
+
+>>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 	}
 }
 
@@ -208,6 +257,7 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 					program_buffer[write_index] = MS_FLAG;
 					write_index++;
 				}
+<<<<<<< HEAD
 			}
 //			if(hmc_tick > 6){
 //				hmc_tick = 0;
@@ -216,6 +266,16 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 //					write_index++;
 //				}
 //			}
+=======
+			}
+			if(hmc_tick > 6){
+				hmc_tick = 0;
+				if(write_index < 12){
+					program_buffer[write_index] = HMC_FLAG;
+					write_index++;
+				}
+			}
+>>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 		}
 
 		if(program_Hz_counter == 1000){
