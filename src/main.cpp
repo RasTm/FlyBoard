@@ -15,11 +15,7 @@
 #include "../Libs/USART.hpp"
 #include "../Libs/Mpu6050.hpp"
 #include "../Libs/Ms5611.hpp"
-<<<<<<< HEAD
 //#include "../Libs/Qmc5883L.hpp"
-=======
-#include "../Libs/Qmc5883L.hpp"
->>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 
 #define PROG_BUFF_SIZE 12
 #define MPU_FLAG 1
@@ -28,10 +24,7 @@
 
 uint8_t program_buffer[PROG_BUFF_SIZE] = {0}, write_index = 0, read_index = 0, buffer_write_able = true;
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 uint8_t sayac=1, sayac2=0;
 uint32_t mpu_Hz_counter=0, mpu_Hz=0, mpu_tick=0,
 		 ms_Hz_counter=0, ms_Hz=0, ms_tick=0,
@@ -57,11 +50,19 @@ float final_pitch=0.0, final_roll=0.0;
 bool set_gyro_angles=false;
 
 //MS5611 Variables
-double altitude = 0.0;
+double altitude = 0.0, data[2] = {0.0,0.0};
 
 //HMC5883L Variables
 float heading_degree = 0.0;
 
+void GPIO_init(){
+	Set_Gpio(GPIOD,12,OUTPUT,PUSH,MED,NOT,SyS);
+	Set_Gpio(GPIOD,13,OUTPUT,PUSH,MED,NOT,SyS);
+	Set_Gpio(GPIOD,14,OUTPUT,PUSH,MED,NOT,SyS);
+	Set_Gpio(GPIOD,15,OUTPUT,PUSH,MED,NOT,SyS);
+
+	Set_Gpio(GPIOA,0,INPUT,PUSH,LOW,DOWN,SyS);
+}
 void Program_timer(){
 	RCC-> APB1ENR |= 0x00000100;             //Timer14 Clock Enable
 	TIM14-> DIER  |= 0x0001;                 //Update Interrupt Enable
@@ -71,25 +72,20 @@ void Program_timer(){
 }
 void interrupt_init(){
 	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,2);
+	Set_Interrupt(EXTI0_IRQn,1);
+	Set_Ext_Interrupt(0,GPIO_A,RISING);
 }
 
 int main(void){
 	Clock_init();
+	GPIO_init();
 	Program_timer();
 
-	USART_Base Serial(USART_1,921600);
+	USART_Base Serial(USART_6,921600);
 	Serial.USART_Transmit(motivation);
 	delay(1000);
 	Serial.USART_Transmit(clear_disp);
 	Serial.USART_Transmit(project_header);
-
-	USART_Base GPS(USART_2,9600);
-	USART_Base Telemetry(USART_6,9600);
-
-	Serial.USART_Transmit("MS5611 Starting");
-	MS5611 ms5611(I2C1);
-	ms5611.get_coefficent();
-	Serial.USART_Transmit(clear_line);
 
 	Serial.USART_Transmit("MPU6050 Starting");
 	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL1);
@@ -102,25 +98,17 @@ int main(void){
 	delay(500);
 	Serial.USART_Transmit(clear_disp);
 
-<<<<<<< HEAD
-//	Serial.USART_Transmit("HMC5883L Starting");
-//	QMC5883 hmc(I2C1);
-//	hmc.config();
-//	delay(50);
-//	Serial.USART_Transmit(clear_line);
-=======
 	Serial.USART_Transmit("MS5611 Starting");
 	MS5611 ms5611(I2C1);
 	ms5611.get_coefficent();
 	Serial.USART_Transmit(clear_line);
 
-	Serial.USART_Transmit("HMC5883L Starting");
-	QMC5883 hmc(I2C1);
-	hmc.config();
-	delay(50);
-	Serial.USART_Transmit(clear_line);
->>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
-	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\tHeading\tMPU Hz\tMS Hz\n\r");
+//	Serial.USART_Transmit("HMC5883L Starting");
+//	QMC5883 hmc(I2C1);
+//	hmc.config();
+//	delay(50);
+//	Serial.USART_Transmit(clear_line);
+	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\tPress\tTemp\tMS Hz\n\r");
 
 	interrupt_init();
 
@@ -170,10 +158,9 @@ int main(void){
 
 		if(program_buffer[read_index] == MS_FLAG){
 			ms_Hz_counter++;
-			ms5611.calculate_absolute_val(altitude);
+			ms5611.calculate_absolute_val(data,altitude);
 		}
 
-<<<<<<< HEAD
 //		if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
 //			hmc_Hz_counter++;
 //			hmc.mag_conv(heading_degree);
@@ -186,35 +173,9 @@ int main(void){
 			Serial.USART_Transmit("\t\t");
 			Serial.Transmit(altitude);
 			Serial.USART_Transmit("\t\t");
-			Serial.Transmit(heading_degree);
+			Serial.Transmit(data[0]);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(mpu_Hz);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(ms_Hz);
-			Serial.USART_Transmit("\n\r");
-			sayac2++;
-			if(sayac2 == 5){
-				sayac2 = 0;
-				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
-			}
-		}
-
-=======
-		if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
-			hmc_Hz_counter++;
-			hmc.mag_conv(heading_degree);
-		}
-
-		if(read_index % 2 == 0){
-			Serial.Transmit(final_roll);
-			Serial.USART_Transmit("\t\t");
-			Serial.Transmit(final_pitch);
-			Serial.USART_Transmit("\t\t");
-			Serial.Transmit(altitude);
-			Serial.USART_Transmit("\t\t");
-			Serial.Transmit(heading_degree);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(mpu_Hz);
+			Serial.Transmit(data[1]);
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(ms_Hz);
 			Serial.USART_Transmit("\n\r");
@@ -225,7 +186,6 @@ int main(void){
 			}
 		}
 
->>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 	}
 }
 
@@ -237,7 +197,7 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		hmc_tick++;
 		program_Hz_counter++;
 
-		if(write_index == 11 && read_index < PROG_BUFF_SIZE){
+		if(write_index == PROG_BUFF_SIZE && read_index < PROG_BUFF_SIZE){
 			write_index = 0;
 			buffer_write_able = false;
 		}
@@ -251,13 +211,12 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 					write_index++;
 				}
 			}
-			if(ms_tick > 11){
+			if(ms_tick > 13){
 				ms_tick = 0;
 				if(write_index < 12){
 					program_buffer[write_index] = MS_FLAG;
 					write_index++;
 				}
-<<<<<<< HEAD
 			}
 //			if(hmc_tick > 6){
 //				hmc_tick = 0;
@@ -266,16 +225,6 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 //					write_index++;
 //				}
 //			}
-=======
-			}
-			if(hmc_tick > 6){
-				hmc_tick = 0;
-				if(write_index < 12){
-					program_buffer[write_index] = HMC_FLAG;
-					write_index++;
-				}
-			}
->>>>>>> 4d0d039a0dd3e559771ca17e47b929e55bdccffa
 		}
 
 		if(program_Hz_counter == 1000){
@@ -289,4 +238,35 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		}
 		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
 	}
+}}
+
+extern "C" { void EXTI0_IRQHandler(void){
+	sayac += 1;
+	if(sayac == 2){
+		Set_Gpio_Pin(GPIOD,15,0);
+		Set_Gpio_Pin(GPIOD,14,1);
+	}
+	else if(sayac == 3){
+		Set_Gpio_Pin(GPIOD,14,0);
+		Set_Gpio_Pin(GPIOD,13,1);
+	}
+	else if(sayac == 4){
+		Set_Gpio_Pin(GPIOD,13,0);
+		Set_Gpio_Pin(GPIOD,12,1);
+	}
+	else if(sayac == 5){
+		Set_Gpio_Pin(GPIOD,12,0);
+		Set_Gpio_Pin(GPIOD,15,1);
+	}
+	else if(sayac == 6){
+		sayac = 1;
+	}
+	else if(sayac == 1){
+		Set_Gpio_Pin(GPIOD,15,0);
+		Set_Gpio_Pin(GPIOD,14,0);
+		Set_Gpio_Pin(GPIOD,13,0);
+		Set_Gpio_Pin(GPIOD,12,0);
+	}
+	Clr_Ext_Interrupt_PD(0);
+	Clr_Interrupt_PD(EXTI0_IRQn);
 }}
