@@ -32,12 +32,13 @@
 
 class MS5611:public I2C_Base{
 	private:
-	uint8_t d1_selection,d2_selection;		        //d1 Pressure, d2 Temp
-	uint32_t raw_preasure = 0, raw_temp = 0;        //Use in get_raw_data() and calc_absolute_val()
-	uint16_t coeff_data[6] = {0};					//Sensor special coefficient variables
+	uint8_t d1_selection,d2_selection;		                 //d1 Pressure, d2 Temp
 	public:
-	bool conv_complete = false;
+	volatile uint32_t raw_preasure = 0, raw_temp = 0;        //Use in get_raw_data() and calc_absolute_val()
+	double old_pressure = 0.0, old_temp = 0.0;               //Store old results
+	uint16_t coeff_data[6] = {0};					         //Sensor special coefficient variables
 	uint8_t counter = 0;
+	bool conv_complete = false;
 
 	MS5611(I2C_TypeDef *I2Cxn, uint8_t ms_d1_select = MS_CONV_D1_4096, uint8_t ms_d2_select = MS_CONV_D2_4096) :I2C_Base(I2Cxn,STANDART){
 		d1_selection = ms_d1_select;
