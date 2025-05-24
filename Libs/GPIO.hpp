@@ -33,9 +33,13 @@
 enum Alternate_: uint8_t {SyS, TIM1_2, TIM3__5, TIM8__11, I2C1__3, SPI1_2, SPI_3, USART1_3,
                    USART4_6, CAN1_2__TIM12_14, OTG_FS_HS, ETHERNET, FSMC__SDIO, Dcmi, EVENTOUT = 15};
 
-void Set_Gpio(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t Mode, uint8_t OType, uint8_t Speed, uint8_t Pupdr, Alternate_ AFR);
+void gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t Mode, uint8_t OType, uint8_t Speed, uint8_t Pupdr, Alternate_ AFR);
 
-void Set_Gpio_Pin(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t set_reset);
+void write_gpio_io(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t set_reset);
+
+uint8_t read_gpio_io(GPIO_TypeDef *Gpio_Port, uint8_t Pin);
+
+void reset_gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin);
 
 void Set_Ext_Interrupt(uint8_t Exti, uint8_t GPIO_Port, uint8_t r_f);
 
