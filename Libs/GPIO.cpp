@@ -11,43 +11,43 @@
   * @param  AFR  : This variable select Alternate Function for desired pin. (Look datasheet for more info)
   * @retval -
   */
-void Set_Gpio(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t Mode, uint8_t OType, uint8_t Speed, uint8_t Pupdr, Alternate_ AFR){
+void gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t Mode, uint8_t OType, uint8_t Speed, uint8_t Pupdr, Alternate_ AFR){
 
-	uint8_t Gpio_field = 0;
+//	uint8_t Gpio_field = 0;
 
-	if(Mode == INPUT) 	     Gpio_field = 0;
-	else if(Mode == OUTPUT)  Gpio_field = 1;
-	else if(Mode == ALTER)   Gpio_field = 2;
-	else if(Mode == ANALOG)  Gpio_field = 3;
-	Gpio_Port-> MODER  |=   (Gpio_field<<(Pin*2));
+//	if(Mode == INPUT) 	     Gpio_field = 0;
+//	else if(Mode == OUTPUT)  Gpio_field = 1;
+//	else if(Mode == ALTER)   Gpio_field = 2;
+//	else if(Mode == ANALOG)  Gpio_field = 3;
+	Gpio_Port-> MODER  |=   (Mode<<(Pin*2));
 
-	if(OType == PUSH)		 Gpio_field = 0;
-	else if(OType == DRAIN)  Gpio_field = 1;
-	Gpio_Port-> OTYPER |=   (Gpio_field<<Pin);
+//	if(OType == PUSH)		 Gpio_field = 0;
+//	else if(OType == DRAIN)  Gpio_field = 1;
+	Gpio_Port-> OTYPER |=   (OType<<Pin);
 
-	if(Speed == LOW) 		Gpio_field = 0;
-	else if(Speed == MED)	Gpio_field = 1;
-	else if(Speed == HIGH)	Gpio_field = 2;
-	else if(Speed == V_HIGH)Gpio_field = 3;
-	Gpio_Port-> OSPEEDR|=  (Gpio_field<<(Pin*2));
+//	if(Speed == LOW) 		Gpio_field = 0;
+//	else if(Speed == MED)	Gpio_field = 1;
+//	else if(Speed == HIGH)	Gpio_field = 2;
+//	else if(Speed == V_HIGH)Gpio_field = 3;
+	Gpio_Port-> OSPEEDR|=  (Speed<<(Pin*2));
 
-	if(Pupdr == NOT)		Gpio_field = 0;
-	else if(Pupdr == UP)	Gpio_field = 1;
-	else if(Pupdr == DOWN)  Gpio_field = 2;
-	Gpio_Port-> PUPDR  |=  (Gpio_field<<(Pin*2));
+//	if(Pupdr == NOT)		Gpio_field = 0;
+//	else if(Pupdr == UP)	Gpio_field = 1;
+//	else if(Pupdr == DOWN)  Gpio_field = 2;
+	Gpio_Port-> PUPDR  |=  (Pupdr<<(Pin*2));
 
 	if(Pin>7){Gpio_Port-> AFR[1] |= (AFR<<((Pin-8)*4));}
 	else{Gpio_Port-> AFR[0] |= (AFR<<(Pin*4));}
 }
 
 /**
-  * @brief  This function allows you to control Gpio pins.
+  * @brief  This function allows you to write Gpio pins.
   * @param  Gpio_Port: This pointer holds which Gpio port you want to configure.
   * @param  Pin      : This variable contains which port pin you want to configure.
   * @param  set_reset: This variable set desired pin to HIGH or LOW logic state.
   * @retval -
   */
-void Set_Gpio_Pin(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t set_reset){
+void write_gpio_io(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t set_reset){
 
 	if(set_reset == 1){
 		Gpio_Port-> BSRRL |= (1<<Pin);
@@ -57,6 +57,33 @@ void Set_Gpio_Pin(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t set_reset){
 	}
 }
 
+/*
+ * @brief This function allows you to read Gpio pins.
+ * @param  Gpio_Port: This pointer holds which Gpio port you want to configure.
+ * @param  Pin      : This variable contains which port pin you want to configure.
+ * @retval Gpio pin state.
+ */
+uint8_t read_gpio_io(GPIO_TypeDef *Gpio_Port, uint8_t Pin){
+	return (Gpio_Port-> IDR &= (1<<Pin));
+}
+
+/*
+ * @brief This function reset all configuration for desired Gpio pin
+ * @param  Gpio_Port: This pointer holds which Gpio port you want to configure.
+ * @param  Pin      : This variable contains which port pin you want to configure.
+ * @retval -
+ */
+void reset_gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin){
+	Gpio_Port-> MODER   &= (0<<Pin*2);
+	Gpio_Port-> OTYPER  &= (0<<Pin);
+	Gpio_Port-> OSPEEDR &= (0<<Pin*2);
+	Gpio_Port-> PUPDR   &= (0<<Pin*2);
+	Gpio_Port-> BSRRH   &= (1<<Pin);
+
+	if(Pin>7){Gpio_Port-> AFR[1] |= (SyS<<((Pin-8)*4));}
+	else{Gpio_Port-> AFR[0] |= (SyS<<(Pin*4));}
+
+}
 /**
   * @brief  This function allows you to configure External Interrupt pins.
   *
