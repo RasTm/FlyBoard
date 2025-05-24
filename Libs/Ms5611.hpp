@@ -35,7 +35,7 @@ class MS5611:public I2C_Base{
 	uint8_t d1_selection,d2_selection;		                 //d1 Pressure, d2 Temp
 	public:
 	volatile uint32_t raw_preasure = 0, raw_temp = 0;        //Use in get_raw_data() and calc_absolute_val()
-	double old_pressure = 0.0, old_temp = 0.0;               //Store old results
+	int32_t old_pressure = 0, old_temp = 0;                 //Store old results
 	uint16_t coeff_data[6] = {0};					         //Sensor special coefficient variables
 	uint8_t counter = 0;
 	bool conv_complete = false;
