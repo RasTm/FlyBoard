@@ -17,20 +17,20 @@ class I2C_Base{
 		if(I2Cxn == I2C1){
 			RCC-> APB1ENR |= 0x00200000;                            //I2C_1 Clock Enable
 			I2Cx = ((I2C_TypeDef *) I2C1_BASE);
-			Set_Gpio(GPIOB, 6, ALTER, DRAIN, HIGH, UP, I2C1__3);	//SCL
-			Set_Gpio(GPIOB, 7, ALTER, DRAIN, HIGH, UP, I2C1__3);	//SDA
+			gpio_config(GPIOB, 6, ALTER, DRAIN, HIGH, UP, I2C1__3);	//SCL
+			gpio_config(GPIOB, 7, ALTER, DRAIN, HIGH, UP, I2C1__3);	//SDA
 		}
 		else if(I2Cxn == I2C2){
 			RCC-> APB1ENR |= 0x00400000;                            //I2C_2 Clock Enable
 			I2Cx = ((I2C_TypeDef *) I2C2_BASE);
-			Set_Gpio(GPIOB, 10, ALTER, DRAIN, MED, UP, I2C1__3);	//SCL
-			Set_Gpio(GPIOB, 11, ALTER, DRAIN, MED, UP, I2C1__3);	//SDA
+			gpio_config(GPIOB, 10, ALTER, DRAIN, MED, UP, I2C1__3);	//SCL
+			gpio_config(GPIOB, 11, ALTER, DRAIN, MED, UP, I2C1__3);	//SDA
 		}
 		else if(I2Cxn == I2C3){
 			RCC-> APB1ENR |= 0x00800000;                            //I2C_3 Clock Enable
 			I2Cx = ((I2C_TypeDef *) I2C3_BASE);
-			Set_Gpio(GPIOB, 8, ALTER, DRAIN, MED, UP, I2C1__3);	    //SCL
-			Set_Gpio(GPIOB, 9, ALTER, DRAIN, MED, UP, I2C1__3);	    //SDA
+			gpio_config(GPIOB, 8, ALTER, DRAIN, MED, UP, I2C1__3);	    //SCL
+			gpio_config(GPIOB, 9, ALTER, DRAIN, MED, UP, I2C1__3);	    //SDA
 		}
 		else while(1);
 

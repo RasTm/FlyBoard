@@ -28,48 +28,48 @@ class USART_Base{
 		if(USARTxn == USART_1){
 			USARTx = ((USART_TypeDef*) USART1_BASE);
 			RCC-> APB2ENR |= 0x00000010;
-			Set_Gpio(GPIOA,  9, ALTER, PUSH, LOW, NOT, USART1_3);		//TX
-			Set_Gpio(GPIOA, 10, ALTER, PUSH, LOW, NOT, USART1_3);		//RX
+			gpio_config(GPIOA,  9, ALTER, PUSH, LOW, NOT, USART1_3);		//TX
+			gpio_config(GPIOA, 10, ALTER, PUSH, LOW, NOT, USART1_3);		//RX
 			#undef Periph_clk
 			#define Periph_clk 84000000							//Later (APB1 or APB2 clocks are writing)
 		}
 		else if(USARTxn == USART_2){
 			USARTx = ((USART_TypeDef*) USART2_BASE);
 			RCC-> APB1ENR |= 0x00020000;
-			Set_Gpio(GPIOD, 5, ALTER, PUSH, LOW, NOT, USART1_3);		//TX
-			Set_Gpio(GPIOD, 6, ALTER, PUSH, LOW, NOT, USART1_3);		//RX
+			gpio_config(GPIOD, 5, ALTER, PUSH, LOW, NOT, USART1_3);		//TX
+			gpio_config(GPIOD, 6, ALTER, PUSH, LOW, NOT, USART1_3);		//RX
 			#undef Periph_clk
 			#define Periph_clk 42000000							//Later (APB1 or APB2 clocks are writing)
 		}
 		else if(USARTxn == USART_3){
 			USARTx = ((USART_TypeDef*) USART3_BASE);
 			RCC-> APB1ENR |= 0x00040000;
-			Set_Gpio(GPIOB, 10, ALTER, PUSH, LOW, NOT, USART1_3);		//TX
-			Set_Gpio(GPIOB, 11, ALTER, PUSH, LOW, NOT, USART1_3);		//RX
+			gpio_config(GPIOB, 10, ALTER, PUSH, LOW, NOT, USART1_3);		//TX
+			gpio_config(GPIOB, 11, ALTER, PUSH, LOW, NOT, USART1_3);		//RX
 			#undef Periph_clk
 			#define Periph_clk 42000000							//Later (APB1 or APB2 clocks are writing)
 		}
 		else if(USARTxn == UART_4){
 			USARTx = ((USART_TypeDef*) UART4_BASE);
 			RCC-> APB1ENR |= 0x00080000;
-			Set_Gpio(GPIOA, 0, ALTER, PUSH, LOW, NOT, USART4_6);		//TX
-			Set_Gpio(GPIOA, 1, ALTER, PUSH, LOW, NOT, USART4_6);		//RX
+			gpio_config(GPIOA, 0, ALTER, PUSH, LOW, NOT, USART4_6);		//TX
+			gpio_config(GPIOA, 1, ALTER, PUSH, LOW, NOT, USART4_6);		//RX
 			#undef Periph_clk
 			#define Periph_clk 42000000							//Later (APB1 or APB2 clocks are writing)
 		}
 		else if(USARTxn == UART_5){
 			USARTx = ((USART_TypeDef*) UART5_BASE);
 			RCC-> APB1ENR |= 0x00100000;
-			Set_Gpio(GPIOC, 12, ALTER, PUSH, LOW, NOT, USART4_6);		//TX
-			Set_Gpio(GPIOD,  2, ALTER, PUSH, LOW, NOT, USART4_6);		//RX
+			gpio_config(GPIOC, 12, ALTER, PUSH, LOW, NOT, USART4_6);		//TX
+			gpio_config(GPIOD,  2, ALTER, PUSH, LOW, NOT, USART4_6);		//RX
 			#undef Periph_clk
 			#define Periph_clk 42000000							//Later (APB1 or APB2 clocks are writing)
 		}
 		else if(USARTxn == USART_6){
 			USARTx = ((USART_TypeDef*) USART6_BASE);
 			RCC-> APB2ENR |= 0x00000020;
-			Set_Gpio(GPIOC, 6, ALTER, PUSH, LOW, NOT, USART4_6);		//TX
-			Set_Gpio(GPIOC, 7, ALTER, PUSH, LOW, NOT, USART4_6);		//RX
+			gpio_config(GPIOC, 6, ALTER, PUSH, LOW, NOT, USART4_6);		//TX
+			gpio_config(GPIOC, 7, ALTER, PUSH, LOW, NOT, USART4_6);		//RX
 			#undef Periph_clk
 			#define Periph_clk 84000000							//Later (APB1 or APB2 clocks are writing)
 		}
@@ -101,7 +101,7 @@ template<typename T> void USART_Base::Transmit(T &value){
     }
     //(floating point types)
     else if (std::is_floating_point<T>::value) {
-        snprintf(buffer, sizeof(buffer), "%.3f", static_cast<double>(value));
+        snprintf(buffer, sizeof(buffer), "%.2f", static_cast<double>(value));
     }
 
 	USART_Transmit((uint8_t*)buffer);

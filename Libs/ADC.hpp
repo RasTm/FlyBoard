@@ -38,7 +38,7 @@ class ADC_Base{
 		for(uint8_t i=0; i<16; i++){									//ADC Pin Configuration And SQR Register Settings
 			if(i<8){
 				if(CH[i] == 1){
-					Set_Gpio(GPIOA, i, ANALOG, PUSH, MED, NOT, SyS);		//ADC_IN0 to ADC_IN7 allocated in GPIOA Pin 0 to 7
+					gpio_config(GPIOA, i, ANALOG, PUSH, MED, NOT, SyS);		//ADC_IN0 to ADC_IN7 allocated in GPIOA Pin 0 to 7
 					if(sequence<6){
 						ADCx-> SQR3 |= (i<<(sequence*5));				//ADC Sequence Register Settings
 						sequence += 1;
@@ -55,7 +55,7 @@ class ADC_Base{
 			}
 			else if(i>7 && i<10){
 				if(CH[i] == 1){
-					Set_Gpio(GPIOB, i-8, ANALOG, PUSH, MED, NOT, SyS);	//ADC_IN8 And ADC_IN9 allocated in GPIOB Pin 0 And 1
+					gpio_config(GPIOB, i-8, ANALOG, PUSH, MED, NOT, SyS);	//ADC_IN8 And ADC_IN9 allocated in GPIOB Pin 0 And 1
 					if(sequence<6){
 						ADCx-> SQR3 |= (i<<(sequence*5));				//ADC Sequence Register Settings
 						sequence += 1;
@@ -72,7 +72,7 @@ class ADC_Base{
 			}
 			else{
 				if(CH[i] == 1){
-					Set_Gpio(GPIOC, i-10, ANALOG, PUSH, MED, NOT, SyS);	//ADC_IN10 to ADC_IN15 allocated in GPIOC Pin 0 to 5
+					gpio_config(GPIOC, i-10, ANALOG, PUSH, MED, NOT, SyS);	//ADC_IN10 to ADC_IN15 allocated in GPIOC Pin 0 to 5
 					if(sequence<6){
 						ADCx-> SQR3 |= (i<<(sequence*5));				//ADC Sequence Register Settings
 						sequence += 1;
