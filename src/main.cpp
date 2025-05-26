@@ -61,8 +61,16 @@ void Program_timer(){
 	TIM14-> ARR    = 999;                    //Tout must be 1ms
 	TIM14-> CR1   |= 0x0085;                 //ARPE Enable ,URS and CEN Enable
 }
+void PPM_read_timer(){
+	RCC-> APB2ENR |= 0x00000001;             //Timer8 Clock Enable
+	TIM8-> DIER   |= 0x0001;                 //Update Interrupt Enable
+	TIM8-> PSC     = 335;                    //Tout = ((PSC+1)*(ARR+1))/Tim_clk) -> Tim_clk = 168Mhz
+	TIM8-> ARR     = 9499;                   //Tout must be 19ms (for 20ms change ARR to 9999)
+}
 void interrupt_init(){
-	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,2);
+	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,0);
+	Set_Interrupt(TIM1_UP_TIM10_IRQn,1);
+	Set_Ext_Interrupt(9,GPIO_E,RISING);
 }
 void i2c_recover(){
 	gpio_config(GPIOB,6,OUTPUT,PUSH,HIGH,UP,SyS);
@@ -78,6 +86,7 @@ void i2c_recover(){
 int main(void){
 	Clock_init();
 	Program_timer();
+	PPM_read_timer();
 	i2c_recover();
 
 	USART_Base Serial(USART_1,921600);
@@ -243,4 +252,12 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		}
 		Clr_Interrupt_PD(TIM8_TRG_COM_TIM14_IRQn);
 	}
+}}
+
+extern "C" { void EXTI9_5_IRQHandler(void){
+
+
+
+	Clr_Ext_Interrupt_PD(9);
+	Clr_Interrupt_PD(EXTI9_5_IRQn);
 }}
