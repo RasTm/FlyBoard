@@ -10,7 +10,7 @@ void Set_Interrupt(IRQn Int_Num, uint8_t Prior){
 
 	NVIC-> ISER[Int_Num/32] |= (1<<(Int_Num%32));
 
-	NVIC-> IP[Int_Num] = Prior;
+	NVIC-> IP[Int_Num] = (Prior<<4);
 }
 
 /**
