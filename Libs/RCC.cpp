@@ -30,6 +30,8 @@ void Clock_init(){
 
     SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
 
+    DBGMCU-> APB1FZ |= 0x00000080;  //TIM13 Counter Stop When Core Halted
+
 	SysTick-> LOAD = 0;
 	SysTick-> LOAD = 167999;		//Systick Load is 167,999 (168 Million Pulse each second/ 167,999 pulse = 1 millisecond)
 
