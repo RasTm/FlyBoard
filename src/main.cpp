@@ -15,7 +15,7 @@
 #include "../Libs/USART.hpp"
 #include "../Libs/Mpu6050.hpp"
 #include "../Libs/Ms5611.hpp"
-//#include "../Libs/Qmc5883L.hpp"
+#include "../Libs/Remote.hpp"
 
 #define PROG_BUFF_SIZE 12
 #define MPU_FLAG 1
@@ -54,22 +54,24 @@ double altitude = 0.0, data[2] = {0.0};
 //HMC5883L Variables
 float heading_degree = 0.0;
 
+//PPM
+PPM remote_ppm;
+
 void Program_timer(){
 	RCC-> APB1ENR |= 0x00000100;             //Timer14 Clock Enable
 	TIM14-> DIER  |= 0x0001;                 //Update Interrupt Enable
-	TIM14-> PSC    = 83;                     //Tout = ((PSC+1)*(ARR+1))/Tim_clk)
+	TIM14-> PSC    = 83;                     //Tout = ((PSC+1)*(ARR+1))/Tim_clk) -> Tim_clk = 84Mhz
 	TIM14-> ARR    = 999;                    //Tout must be 1ms
 	TIM14-> CR1   |= 0x0085;                 //ARPE Enable ,URS and CEN Enable
 }
 void PPM_read_timer(){
-	RCC-> APB2ENR |= 0x00000001;             //Timer8 Clock Enable
-	TIM8-> DIER   |= 0x0001;                 //Update Interrupt Enable
-	TIM8-> PSC     = 335;                    //Tout = ((PSC+1)*(ARR+1))/Tim_clk) -> Tim_clk = 168Mhz
-	TIM8-> ARR     = 9499;                   //Tout must be 19ms (for 20ms change ARR to 9999)
+	RCC-> APB1ENR  |= 0x00000080;             //Timer13 Clock Enable
+	TIM13-> PSC     = 839;                    //Tout = ((PSC+1)*(ARR+1))/Tim_clk) -> Tim_clk = 84Mhz
+	TIM13-> ARR     = 0xFFFF;                 //Tout must be 40ms (for 20ms change ARR to 200-1)
 }
 void interrupt_init(){
 	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,0);
-	Set_Interrupt(TIM1_UP_TIM10_IRQn,1);
+	Set_Interrupt(EXTI9_5_IRQn,1);
 	Set_Ext_Interrupt(9,GPIO_E,RISING);
 }
 void i2c_recover(){
@@ -120,7 +122,7 @@ int main(void){
 //	delay(50);
 //	Serial.USART_Transmit(clear_line);
 //	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\tMPU Hz\tMS Hz\n\r");
-	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\tPreassure\tTemp\n\r");
+	Serial.USART_Transmit("Roll\tPitch\tAltitude\tPreassure\tTemp\tChannels\n\r");
 
 	interrupt_init();
 
@@ -180,19 +182,27 @@ int main(void){
 
 		if(read_index % 2 == 0){
 			Serial.Transmit(final_roll);
-			Serial.USART_Transmit("\t\t");
+			Serial.USART_Transmit("\t");
 			Serial.Transmit(final_pitch);
-			Serial.USART_Transmit("\t\t");
+			Serial.USART_Transmit("\t");
 			Serial.Transmit(altitude);
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(data[0]);
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(data[1]);
-		    Serial.USART_Transmit("\n\r");
-//			Serial.Transmit(mpu_Hz);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(ms_Hz);
-//			Serial.USART_Transmit("\n\r");
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(mpu_Hz);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(ms_Hz);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[0]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[1]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[2]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[3]);
+			Serial.USART_Transmit("\n\r");
 			sayac2++;
 			if(sayac2 == 5){
 				sayac2 = 0;
@@ -256,7 +266,30 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 
 extern "C" { void EXTI9_5_IRQHandler(void){
 
-
+	if(remote_ppm.first_rising_edge == false && remote_ppm.dead_space_seen == false){
+		remote_ppm.first_rising_edge = true;
+		TIM13-> CR1 |= 0x0001;                            //Timer13 Counter Start
+	}
+	else{
+		if(TIM13-> CNT > 200){
+			remote_ppm.dead_space_seen = true;
+			TIM13-> CNT = 0;
+		}
+		else{      //Each tic 100ns, 30x100ns = 3ms, 3-4ms dead space when all channels max
+			remote_ppm.period = TIM13-> CNT;
+			TIM13-> CNT = 0;
+			remote_ppm.channelX[remote_ppm.i] = remote_ppm.period;
+			remote_ppm.i++;
+		}
+		if(remote_ppm.i == 8){
+			remote_ppm.first_rising_edge = false;
+			remote_ppm.dead_space_seen   = false;
+			remote_ppm.i=0;
+		}
+		if(remote_ppm.dead_space_seen == false){
+			TIM13-> CNT = 0;
+		}
+	}
 
 	Clr_Ext_Interrupt_PD(9);
 	Clr_Interrupt_PD(EXTI9_5_IRQn);
