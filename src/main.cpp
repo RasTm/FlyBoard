@@ -66,12 +66,14 @@ void Program_timer(){
 }
 void PPM_read_timer(){
 	RCC-> APB1ENR  |= 0x00000080;             //Timer13 Clock Enable
-	TIM13-> PSC     = 839;                    //Tout = ((PSC+1)*(ARR+1))/Tim_clk) -> Tim_clk = 84Mhz
+	TIM13-> PSC     = 83;                     //Tout = ((PSC+1)*(ARR+1))/Tim_clk) -> Tim_clk = 84Mhz
 	TIM13-> ARR     = 0xFFFF;                 //Tout must be 40ms (for 20ms change ARR to 200-1)
+	TIM13-> CR1    |= 0x0001;
+	gpio_config(GPIOE,9,INPUT,PUSH,HIGH,UP,SyS);
 }
 void interrupt_init(){
-	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,0);
-	Set_Interrupt(EXTI9_5_IRQn,1);
+	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,1);
+	Set_Interrupt(EXTI9_5_IRQn,0);
 	Set_Ext_Interrupt(9,GPIO_E,RISING);
 }
 void i2c_recover(){
@@ -181,20 +183,20 @@ int main(void){
 //		}
 
 		if(read_index % 2 == 0){
-			Serial.Transmit(final_roll);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(final_pitch);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(altitude);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(data[0]);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(data[1]);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(mpu_Hz);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(ms_Hz);
-			Serial.USART_Transmit("\t");
+//			Serial.Transmit(final_roll);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(final_pitch);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(altitude);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(data[0]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(data[1]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(mpu_Hz);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(ms_Hz);
+//			Serial.USART_Transmit("\t");
 			Serial.Transmit(remote_ppm.channelX[0]);
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(remote_ppm.channelX[1]);
@@ -264,33 +266,38 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 	}
 }}
 
-extern "C" { void EXTI9_5_IRQHandler(void){
+extern "C" void EXTI9_5_IRQHandler(void) {
+	remote_ppm.current_time = TIM13-> CNT;
 
-	if(remote_ppm.first_rising_edge == false && remote_ppm.dead_space_seen == false){
-		remote_ppm.first_rising_edge = true;
-		TIM13-> CR1 |= 0x0001;                            //Timer13 Counter Start
+	if(!remote_ppm.first_valid_edge){
+		remote_ppm.last_time = remote_ppm.current_time;
+		remote_ppm.first_valid_edge = true;
+//		TIM13-> CNT = 0;
+		Clr_Ext_Interrupt_PD(9);
+		Clr_Interrupt_PD(EXTI9_5_IRQn);
+		return;
+	}
+
+    remote_ppm.current_time = TIM13->CNT;
+	remote_ppm.delta = remote_ppm.current_time - remote_ppm.last_time;
+	remote_ppm.last_time = remote_ppm.current_time;
+
+	if(!remote_ppm.dead_space_seen) {
+		if(remote_ppm.delta > 4000){ // Sync boþluðu tespiti
+			remote_ppm.dead_space_seen = true;
+			remote_ppm.i = 0;
+		}
 	}
 	else{
-		if(TIM13-> CNT > 200){
-			remote_ppm.dead_space_seen = true;
-			TIM13-> CNT = 0;
-		}
-		else{      //Each tic 100ns, 30x100ns = 3ms, 3-4ms dead space when all channels max
-			remote_ppm.period = TIM13-> CNT;
-			TIM13-> CNT = 0;
-			remote_ppm.channelX[remote_ppm.i] = remote_ppm.period;
-			remote_ppm.i++;
+		if(remote_ppm.i < 8){
+			remote_ppm.channelX[remote_ppm.i++] = remote_ppm.delta;
 		}
 		if(remote_ppm.i == 8){
-			remote_ppm.first_rising_edge = false;
-			remote_ppm.dead_space_seen   = false;
-			remote_ppm.i=0;
-		}
-		if(remote_ppm.dead_space_seen == false){
-			TIM13-> CNT = 0;
+			remote_ppm.dead_space_seen = false;
+			// burada veri iþleme yapýlabilir
 		}
 	}
 
 	Clr_Ext_Interrupt_PD(9);
 	Clr_Interrupt_PD(EXTI9_5_IRQn);
-}}
+}
