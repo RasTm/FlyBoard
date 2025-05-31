@@ -46,6 +46,7 @@ class I2C_Base{
 
 		else while(1);
 	}
+	static void i2c_recover(I2C_TypeDef *I2Cxn);
 
 	void write_byte(uint8_t dev_addr, uint8_t dev_reg_addr, uint8_t data);
 	void multi_byte_write(uint8_t dev_addr, uint8_t dev_reg_addr, std::vector<uint8_t> &data);

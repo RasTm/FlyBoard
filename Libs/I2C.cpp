@@ -1,6 +1,35 @@
 #include "I2C.hpp"
 
 /**
+  * @brief This method try to save i2c bus from i2c anknowledge lock
+  * @param  -
+  * @retval -
+  */
+void I2C_Base::i2c_recover(I2C_TypeDef *I2Cxn){
+	if(I2Cxn == I2C1){
+		gpio_config(GPIOB,6,OUTPUT,PUSH,HIGH,UP,SyS);
+		gpio_config(GPIOB,7,OUTPUT,PUSH,HIGH,UP,SyS);
+
+		write_gpio_io(GPIOB,6,1);
+		write_gpio_io(GPIOB,7,1);
+
+		reset_gpio_config(GPIOB,6);
+		reset_gpio_config(GPIOB,7);
+	}
+	else if(I2Cxn == I2C2){
+		gpio_config(GPIOB,6,OUTPUT,PUSH,HIGH,UP,SyS);
+		gpio_config(GPIOB,7,OUTPUT,PUSH,HIGH,UP,SyS);
+
+		write_gpio_io(GPIOB,6,1);
+		write_gpio_io(GPIOB,7,1);
+
+		reset_gpio_config(GPIOB,6);
+		reset_gpio_config(GPIOB,7);
+	}
+}
+
+
+/**
   * @brief  This method allows you to transmit single byte data through I2C interface.
   * @param  dev_addr    : This variable holds slave device I2C interface address.
   * @param  dev_reg_addr: This variable holds slave device register address.
