@@ -49,11 +49,11 @@ void gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t Mode, uint8_t OTy
   */
 void write_gpio_io(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t set_reset){
 
-	if(set_reset == 1){
-		Gpio_Port-> BSRRL |= (1<<Pin);
+	if(set_reset > 0){
+		Gpio_Port-> BSRRL |= (1<<Pin);   //Set
 	}
-	else if(set_reset == 0){
-		Gpio_Port-> BSRRH |= (1<<Pin);
+	else{
+		Gpio_Port-> BSRRH |= (1<<Pin);   //Reset
 	}
 }
 
@@ -94,7 +94,7 @@ void reset_gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin){
   */
 void Set_Ext_Interrupt(uint8_t Exti, uint8_t GPIO_Port, uint8_t r_f){
 
-	SYSCFG-> EXTICR[Exti/4] |= (GPIO_Port<<(Exti*4));
+	SYSCFG-> EXTICR[Exti/4] |= (GPIO_Port<<((Exti%4)*4));
 
 	EXTI-> IMR |= (1<<Exti);
 
