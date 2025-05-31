@@ -45,9 +45,6 @@ class MS5611:public I2C_Base{
 		d2_selection = ms_d2_select;
 	}
 
-	void get_coefficent_v(std::vector<uint16_t> &coeff_data);
-	void calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *return_val, double &alt);
-
 	void get_raw_data();
 	void get_coefficent();
 	void calculate_absolute_val(double *return_val, double &alt);

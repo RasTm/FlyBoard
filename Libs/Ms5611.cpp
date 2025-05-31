@@ -2,24 +2,6 @@
 
 /**
   * @brief  This method allows you to receive coefficient data.
-  * @param  coeff_data: This variable is where do you want to save coefficient data.
-  * @retval
-  */
-void MS5611::get_coefficent_v(std::vector<uint16_t> &coeff_data){
-	write_byte_small(MS_ADDR, MS_RESET);
-	uint8_t raw_data[2]={0,0};
-
-	for(uint8_t i=0;i<6;i++){
-		raw_data[0]=0,raw_data[1]=0;
-		delay(50);
-		write_byte_small(MS_ADDR, (MS_PROM_READ+(i*2)));
-		multi_byte_read_small(MS_ADDR, raw_data, 2);
-		coeff_data.insert(coeff_data.begin()+i, ((raw_data[0]<<8)+raw_data[1]));
-	}
-}
-
-/**
-  * @brief  This method allows you to receive coefficient data.
   * @param  coeff_data: This variable is located in class.
   * @retval
   */
@@ -79,43 +61,11 @@ void MS5611::get_raw_data(){
   * @param  alt         : This variable holds your altitude (about sea level)
   * @retval
   */
-void MS5611::calculate_absolute_val_v(std::vector<uint16_t> &coeff, double *return_val, double &alt){
-	if(conv_complete != true){
-		get_raw_data();
-	}
-	else{
-		int32_t dT   = raw_temp-(coeff[4]*256);
-		int32_t TEMP = 2000+((int64_t)(dT*coeff[5])/8388608);
-
-		int64_t OFF  = ((int64_t)coeff[1]*65536)+(((int64_t)coeff[3]*dT)/128);
-		int64_t SENS = ((int64_t)coeff[0]*32768)+(((int64_t)coeff[2]*dT)/256);
-		int32_t P	 = ((((raw_preasure*SENS)/2097152)-OFF)/32768);
-		return_val[0] = P/100;
-		return_val[1] = TEMP/100;
-
-		if((return_val[0] > (old_pressure+1000) || return_val[1] > (old_temp+50) || return_val[0] < (old_pressure-1000) || return_val[1] < (old_temp-50)) && (old_pressure != 0.0 && old_temp != 0.0)){
-			return_val[0] = old_pressure;
-			return_val[1] = old_temp;
-		}
-		else{
-			old_pressure = return_val[0];
-			old_temp = return_val[1];
-		}
-
-	//	alt = ((1.0 - (pow((return_val[0]/1013.25),0.1902949) )) * 44307.69396);
-		alt = (((pow((1013.25/return_val[0]),0.1902225603956629256229788852958))-1) * (return_val[1]+273.15)) / 0.0065;
-		conv_complete = false;
-	}
-}
-
 void MS5611::calculate_absolute_val(double *return_val, double &alt){
-	if(conv_complete != true){
-		get_raw_data();
-	}
-
-	else{
+	if(conv_complete == false){get_raw_data();}
+	else if(conv_complete == true){
 		int32_t dT   = raw_temp-(coeff_data[4]*256);
-		int32_t TEMP = 2000+((int64_t)(dT*coeff_data[5])/8388608);
+		int32_t TEMP = 2000+(((int64_t)dT*coeff_data[5])/8388608);
 
 		int64_t OFF  = ((int64_t)coeff_data[1]*65536)+(((int64_t)coeff_data[3]*dT)/128);
 		int64_t SENS = ((int64_t)coeff_data[0]*32768)+(((int64_t)coeff_data[2]*dT)/256);
@@ -147,9 +97,9 @@ void MS5611::calculate_absolute_val(double *return_val, double &alt){
  */
 void MS5611::calculate_absolute_val(double &alt){
 	if(conv_complete == false){get_raw_data();}
-	if(conv_complete == true){
+	else if(conv_complete == true){
 		int32_t dT   = raw_temp-(coeff_data[4]*256);
-		int32_t TEMP = 2000+((int64_t)(dT*coeff_data[5])/8388608);
+		int32_t TEMP = 2000+(((int64_t)dT*coeff_data[5])/8388608);
 
 		int64_t OFF  = ((int64_t)coeff_data[1]*65536)+(((int64_t)coeff_data[3]*dT)/128);
 		int64_t SENS = ((int64_t)coeff_data[0]*32768)+(((int64_t)coeff_data[2]*dT)/256);
