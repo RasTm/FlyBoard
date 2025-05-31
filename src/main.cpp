@@ -67,31 +67,21 @@ void Program_timer(){
 void PPM_read_timer(){
 	RCC-> APB1ENR  |= 0x00000080;             //Timer13 Clock Enable
 	TIM13-> PSC     = 83;                     //Tout = ((PSC+1)*(ARR+1))/Tim_clk) -> Tim_clk = 84Mhz
-	TIM13-> ARR     = 0xFFFF;                 //Tout must be 40ms (for 20ms change ARR to 200-1)
-	TIM13-> CR1    |= 0x0001;
-	gpio_config(GPIOE,9,INPUT,PUSH,HIGH,UP,SyS);
+	TIM13-> ARR     = 0xFFFF;
+	TIM13-> CR1    |= 0x0001;                 //Timer13 Counter Start
+	gpio_config(GPIOE,11,INPUT,PUSH,LOW,UP,SyS);   //GPIOE 11 Configure
 }
 void interrupt_init(){
 	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,1);
-	Set_Interrupt(EXTI9_5_IRQn,0);
-	Set_Ext_Interrupt(9,GPIO_E,RISING);
-}
-void i2c_recover(){
-	gpio_config(GPIOB,6,OUTPUT,PUSH,HIGH,UP,SyS);
-	gpio_config(GPIOB,7,OUTPUT,PUSH,HIGH,UP,SyS);
-
-	write_gpio_io(GPIOB,6,1);
-	write_gpio_io(GPIOB,7,1);
-
-	reset_gpio_config(GPIOB,6);
-	reset_gpio_config(GPIOB,7);
+	Set_Interrupt(EXTI15_10_IRQn,0);
+	Set_Ext_Interrupt(11,GPIO_E,RISING);
 }
 
 int main(void){
 	Clock_init();
 	Program_timer();
 	PPM_read_timer();
-	i2c_recover();
+	I2C_Base::i2c_recover(I2C1);
 
 	USART_Base Serial(USART_1,921600);
 	Serial.USART_Transmit(motivation);
@@ -101,11 +91,6 @@ int main(void){
 
 	USART_Base GPS(USART_2,9600);
 	USART_Base Telemetry(USART_6,9600);
-
-	Serial.USART_Transmit("MS5611 Starting");
-	MS5611 ms5611(I2C1);
-	ms5611.get_coefficent();
-	Serial.USART_Transmit(clear_line);
 
 	Serial.USART_Transmit("MPU6050 Starting");
 	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL1);
@@ -117,6 +102,11 @@ int main(void){
 	Serial.USART_Transmit_float(gyro_constant,8);
 	delay(500);
 	Serial.USART_Transmit(clear_disp);
+
+	Serial.USART_Transmit("MS5611 Starting");
+	MS5611 ms5611(I2C1);
+	ms5611.get_coefficent();
+	Serial.USART_Transmit(clear_line);
 
 //	Serial.USART_Transmit("HMC5883L Starting");
 //	QMC5883 hmc(I2C1);
@@ -183,27 +173,35 @@ int main(void){
 //		}
 
 		if(read_index % 2 == 0){
-//			Serial.Transmit(final_roll);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(final_pitch);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(altitude);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(data[0]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(data[1]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(mpu_Hz);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(ms_Hz);
-//			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[0]);
+			Serial.Transmit(final_roll);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[1]);
+			Serial.Transmit(final_pitch);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[2]);
+			Serial.Transmit(altitude);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[3]);
+			Serial.Transmit(data[0]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(data[1]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(mpu_Hz);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(ms_Hz);
+			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[0]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[1]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[2]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[3]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[4]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[5]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[6]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[7]);
 			Serial.USART_Transmit("\n\r");
 			sayac2++;
 			if(sayac2 == 5){
@@ -266,15 +264,14 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 	}
 }}
 
-extern "C" void EXTI9_5_IRQHandler(void) {
+extern "C" void EXTI15_10_IRQHandler(void) {
 	remote_ppm.current_time = TIM13-> CNT;
 
 	if(!remote_ppm.first_valid_edge){
 		remote_ppm.last_time = remote_ppm.current_time;
 		remote_ppm.first_valid_edge = true;
-//		TIM13-> CNT = 0;
-		Clr_Ext_Interrupt_PD(9);
-		Clr_Interrupt_PD(EXTI9_5_IRQn);
+		Clr_Ext_Interrupt_PD(11);
+		Clr_Interrupt_PD(EXTI15_10_IRQn);
 		return;
 	}
 
@@ -290,14 +287,15 @@ extern "C" void EXTI9_5_IRQHandler(void) {
 	}
 	else{
 		if(remote_ppm.i < 8){
-			remote_ppm.channelX[remote_ppm.i++] = remote_ppm.delta;
+			remote_ppm.channelX[remote_ppm.i] = remote_ppm.delta-2;
+			remote_ppm.i += 	1;
 		}
 		if(remote_ppm.i == 8){
 			remote_ppm.dead_space_seen = false;
-			// burada veri iþleme yapýlabilir
+			remote_ppm.i = 0;
 		}
 	}
 
-	Clr_Ext_Interrupt_PD(9);
-	Clr_Interrupt_PD(EXTI9_5_IRQn);
+	Clr_Ext_Interrupt_PD(11);
+	Clr_Interrupt_PD(EXTI15_10_IRQn);
 }
