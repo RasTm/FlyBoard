@@ -69,7 +69,7 @@ void MS5611::calculate_absolute_val(double *return_val, double &alt){
 
 		int64_t OFF  = ((int64_t)coeff_data[1]*65536)+(((int64_t)coeff_data[3]*dT)/128);
 		int64_t SENS = ((int64_t)coeff_data[0]*32768)+(((int64_t)coeff_data[2]*dT)/256);
-		int32_t P	 = ((((raw_preasure*SENS)/2097152)-OFF)/32768);
+		int32_t P	 = ((((raw_preasure*SENS)/2097152)-OFF)/32768) * 2;                     // * 2 added bcz of the sensor malfunction
 		return_val[0] = P/100;
 		return_val[1] = (TEMP/100);
 
@@ -103,7 +103,7 @@ void MS5611::calculate_absolute_val(double &alt){
 
 		int64_t OFF  = ((int64_t)coeff_data[1]*65536)+(((int64_t)coeff_data[3]*dT)/128);
 		int64_t SENS = ((int64_t)coeff_data[0]*32768)+(((int64_t)coeff_data[2]*dT)/256);
-		int32_t P	 = ((((raw_preasure*SENS)/2097152)-OFF)/32768);
+		int32_t P	 = ((((raw_preasure*SENS)/2097152)-OFF)/32768) * 2;                     // * 2 added bcz of the sensor malfunction
 
 		if(((P/100) > (old_pressure+1000) || (TEMP/100) > (old_temp+50) || (P/100) < (old_pressure-1000) || (TEMP/100) < (old_temp-50)) && (old_pressure != 0.0 && old_temp != 0.0)){
 			P = old_pressure * 100;
