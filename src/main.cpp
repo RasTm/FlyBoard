@@ -10,12 +10,14 @@
 #include "stdlib.h"
 
 #include "../Libs/RCC.hpp"
+#include "../Libs/ADC.hpp"
 #include "../Libs/GPIO.hpp"
 #include "../Libs/Nvic.hpp"
 #include "../Libs/USART.hpp"
-#include "../Libs/Mpu6050.hpp"
-#include "../Libs/Ms5611.hpp"
+#include "../Libs/NeoM8.hpp"
 #include "../Libs/Remote.hpp"
+#include "../Libs/Ms5611.hpp"
+#include "../Libs/Mpu6050.hpp"
 
 #define PROG_BUFF_SIZE 12
 #define MPU_FLAG 1
@@ -24,7 +26,7 @@
 
 uint8_t program_buffer[PROG_BUFF_SIZE] = {0}, write_index = 0, read_index = 0, buffer_write_able = true;
 
-uint8_t sayac=1, sayac2=0;
+uint8_t  sayac2=0;
 uint32_t mpu_Hz_counter=0, mpu_Hz=0, mpu_tick=0,
 		 ms_Hz_counter=0, ms_Hz=0, ms_tick=0,
 		 hmc_Hz_counter=0, hmc_Hz=0, hmc_tick=0,
@@ -44,18 +46,21 @@ const uint8_t clear_line[] = "\033[2K\r";
 //MPU6050 Variables
 int16_t raw_gyro[3] = {0}, raw_accel[3] = {0};
 uint32_t acc_total_vec=0;
-float old_gyro_roll=0.0, old_gyro_pitch=0.0, gyro_pitch=0.0, gyro_roll=0.0, acc_pitch=0.0, acc_roll=0.0, gyro_constant=0.0;
+float old_gyro_roll=0.0, old_gyro_pitch=0.0, gyro_pitch=0.0, gyro_roll=0.0, acc_pitch=0.0, acc_roll=0.0;
 float final_pitch=0.0, final_roll=0.0;
-bool set_gyro_angles=false;
 
 //MS5611 Variables
-double altitude = 0.0, data[2] = {0.0};
+double data[2] = {0.0}, altitude = 0.0;
 
 //HMC5883L Variables
 float heading_degree = 0.0;
 
 //PPM
 PPM remote_ppm;
+
+//ADC
+uint16_t adc_result[2] = {0};
+uint8_t adc_ch = 0;
 
 void Program_timer(){
 	RCC-> APB1ENR |= 0x00000100;             //Timer14 Clock Enable
@@ -76,6 +81,7 @@ void interrupt_init(){
 	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,1);
 	Set_Interrupt(TIM8_UP_TIM13_IRQn,2);
 	Set_Interrupt(EXTI15_10_IRQn,0);
+	Set_Interrupt(ADC_IRQn,3);
 	Set_Ext_Interrupt(11,GPIO_E,RISING);
 }
 
@@ -85,13 +91,20 @@ int main(void){
 	PPM_read_timer();
 	I2C_Base::i2c_recover(I2C1);
 
+	ADC_Base batt_V(ADC_1, 1, 0, 0);                                         //GPIOA 1, first, sample = 7
+	ADC_Base batt_A(ADC_1, 0, 1, 0);                                         //GPIOA 0, second, sample = 7
+	ADC_Base::ADC_enable_IRQ(ADC1);
+	ADC_Base::ADC_scan_enable(ADC1);
+	ADC_Base::ADC_continuous_enable(ADC1);
+	ADC_Base::ADC_start(ADC1);
+
 	USART_Base Serial(USART_1,921600);
 	Serial.USART_Transmit(motivation);
 	delay(1000);
 	Serial.USART_Transmit(clear_disp);
 	Serial.USART_Transmit(project_header);
 
-	USART_Base GPS(USART_2,9600);
+	NEOM8 gps(USART_2,9600);
 	USART_Base Telemetry(USART_6,9600);
 
 	Serial.USART_Transmit("MPU6050 Starting");
@@ -99,9 +112,9 @@ int main(void){
 	mpu.config();
 	Serial.USART_Transmit("\n\rCalibrating...");
 	mpu.calc_IMU_error();
-	gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);                  //250 Hz Refresh rate
+	mpu.gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);                  //250 Hz Refresh rate
 	Serial.USART_Transmit("\033[2K\rCalibration Done Gyro Constant = ");
-	Serial.USART_Transmit_float(gyro_constant,8);
+	Serial.USART_Transmit_float(mpu.gyro_constant,8);
 	delay(500);
 	Serial.USART_Transmit(clear_disp);
 
@@ -133,33 +146,32 @@ int main(void){
 			raw_accel[1] -= mpu.imu_calibration_error[1];
 			raw_accel[2] -= mpu.imu_calibration_error[2];
 
-			raw_gyro[0] -= mpu.imu_calibration_error[3];
-			raw_gyro[1] -= mpu.imu_calibration_error[4];
-			raw_gyro[2] -= mpu.imu_calibration_error[5];
+			raw_gyro[0]  -= mpu.imu_calibration_error[3];
+			raw_gyro[1]  -= mpu.imu_calibration_error[4];
+			raw_gyro[2]  -= mpu.imu_calibration_error[5];
 
-			gyro_pitch += raw_gyro[0] * gyro_constant;
-			gyro_roll  += raw_gyro[1] * gyro_constant;
+			gyro_pitch += raw_gyro[0] * mpu.gyro_constant;
+			gyro_roll  += raw_gyro[1] * mpu.gyro_constant;
 
 			old_gyro_pitch = gyro_pitch;
 			old_gyro_roll  = gyro_roll;
 
-			gyro_pitch += old_gyro_roll  * arm_sin_f32((raw_gyro[2] * gyro_constant)*RAD_TO_DEG);
-			gyro_roll  -= old_gyro_pitch * arm_sin_f32((raw_gyro[2] * gyro_constant)*RAD_TO_DEG);
+			gyro_pitch += old_gyro_roll  * arm_sin_f32((raw_gyro[2] * mpu.gyro_constant)*RAD_TO_DEG);
+			gyro_roll  -= old_gyro_pitch * arm_sin_f32((raw_gyro[2] * mpu.gyro_constant)*RAD_TO_DEG);
 
 			acc_total_vec = sqrt((raw_accel[0]*raw_accel[0])+(raw_accel[1]*raw_accel[1])+(raw_accel[2]*raw_accel[2]));
 			acc_pitch = asin((float)raw_accel[1]/(float)acc_total_vec)* RAD_TO_DEG;
 			acc_roll  = asin((float)raw_accel[0]/(float)acc_total_vec)*-RAD_TO_DEG;
 
-			if(set_gyro_angles){
+			if(mpu.set_gyro_angles){
 				gyro_pitch = (gyro_pitch * 0.8) + (acc_pitch * 0.2);
 				gyro_roll  = (gyro_roll  * 0.8) + (acc_roll  * 0.2);
 			}
 			else{
-				set_gyro_angles = true;
+				mpu.set_gyro_angles = true;
 				gyro_pitch = acc_pitch;
 				gyro_roll  = acc_roll;
 			}
-
 			final_pitch = gyro_pitch;
 			final_roll  = gyro_roll ;
 		}
@@ -188,22 +200,23 @@ int main(void){
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(ms_Hz);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[0]);
+			Serial.Transmit(adc_result[0]);
 			Serial.USART_Transmit("\t");
-//			Serial.Transmit(remote_ppm.channelX[1]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(remote_ppm.channelX[2]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(remote_ppm.channelX[3]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(remote_ppm.channelX[4]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(remote_ppm.channelX[5]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(remote_ppm.channelX[6]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(remote_ppm.channelX[7]);
+			Serial.Transmit(adc_result[1]);
+/*			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[2]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[3]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[4]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[5]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[6]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(remote_ppm.channelX[7]);*/
 			Serial.USART_Transmit("\n\r");
+
 			sayac2++;
 			if(sayac2 == 5){
 				sayac2 = 0;
@@ -214,7 +227,7 @@ int main(void){
 }
 
 extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
-	if(TIM14-> SR & 0x0001){
+		if(TIM14-> SR & 0x0001){
 		TIM14-> SR = 0;
 		mpu_tick++;
 		ms_tick++;
@@ -253,7 +266,7 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 
 		if(program_Hz_counter == 1000){
 			mpu_Hz = mpu_Hz_counter;
-			ms_Hz  = ms_Hz_counter;
+			ms_Hz  = ms_Hz_counter / 4;
 			hmc_Hz = hmc_Hz_counter;
 			program_Hz_counter = 0;
 			mpu_Hz_counter = 0;
@@ -321,3 +334,26 @@ extern "C" { void TIM8_UP_TIM13_IRQHandler(void){
 		Clr_Interrupt_PD(TIM8_UP_TIM13_IRQn);
 	}
 }}
+
+extern "C" { void USART2_IRQHandler(void){
+	if(USART2-> SR & 0x00000020){
+		USART2-> SR = 0;
+//		gps.count++;
+//		gps.nmea[gps.count] = USART2-> DR;
+//
+//		if(gps.count > 1024-1){
+//			gps.count = 0;
+//		}
+	}
+}}
+
+extern "C" { void ADC_IRQHandler(void){
+	if(ADC1-> SR & 0x00000002){
+		ADC1-> SR = 0;
+		adc_result[adc_ch] = ADC1-> DR;             //First V, Then A
+		adc_ch++;
+		if(adc_ch == 2) {adc_ch = 0;}
+		Clr_Interrupt_PD(ADC_IRQn);
+	}
+}}
+
