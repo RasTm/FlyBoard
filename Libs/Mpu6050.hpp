@@ -132,9 +132,10 @@
 
 class MPU6050 : public I2C_Base{
 	public:
-	uint8_t gyro_fs_reg, accel_fs_reg;
-	float gyro_fs_val, accel_fs_val;
 	int32_t imu_calibration_error[6] = {0};				//MPU6050 error storing variable
+	uint8_t gyro_fs_reg, accel_fs_reg;
+	float gyro_fs_val = 0.0, accel_fs_val = 0.0, gyro_constant = 0.0;
+	bool set_gyro_angles = false;
 
 	MPU6050(I2C_TypeDef* I2Cxn, uint8_t gyro_fs_select = MPU6050_FS_SEL0, uint8_t accel_fs_select = MPU6050_FS_SEL0) :I2C_Base(I2Cxn,STANDART){
 
