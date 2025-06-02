@@ -28,9 +28,9 @@ void MS5611::get_raw_data(){
 		write_byte_small(MS_ADDR, d1_selection);		//Pressure Conversion
 		counter++;
 		//delay(11);
-		goto finish;
+		return;
 	}
-	if(counter == 1){
+	else if(counter == 1){
 		uint8_t Raw_val[3] = {0,0,0};
 		write_byte_small(MS_ADDR, MS_ADC_READ);
 		multi_byte_read_small(MS_ADDR, Raw_val, 3);
@@ -39,17 +39,16 @@ void MS5611::get_raw_data(){
 		write_byte_small(MS_ADDR, d2_selection);		//temp Conversion
 		counter++;
 		//delay(11);
-		goto finish;
+		return;
 	}
-	if(counter == 2){
+	else if(counter == 2){
 		uint8_t Raw_val[3] = {0,0,0};
 		write_byte_small(MS_ADDR, MS_ADC_READ);
 		multi_byte_read_small(MS_ADDR, Raw_val, 3);
 		raw_temp = ((Raw_val[0]<<16)+(Raw_val[1]<<8)+Raw_val[2]);
 		conv_complete = true;
-		counter = 0;
+		return;
 	}
-	finish:;
 }
 
 /**
