@@ -6,12 +6,24 @@ void ADC_Base::ADC_enable_IRQ(ADC_TypeDef *ADCxn){
 	ADCxn-> CR1 |= 0x00000020;                        //ADC EOC IRQ Enable
 }
 
+void ADC_Base::ADC_disable_IRQ(ADC_TypeDef *ADCxn){
+	ADCxn-> CR1 &= 0xFFFFFFDF;                        //ADC EOC IRQ Disable
+}
+
 void ADC_Base::ADC_scan_enable(ADC_TypeDef *ADCxn){
 	ADCxn-> CR1 |= 0x00000100;                        //ADC Scan Mode Enable
 }
 
+void ADC_Base::ADC_scan_disable(ADC_TypeDef *ADCxn){
+	ADCxn-> CR1 &= 0xFFFFFEFF;                        //ADC Scan Mode Disable
+}
+
 void ADC_Base::ADC_continuous_enable(ADC_TypeDef *ADCxn){
 	ADCxn-> CR2 |= 0x00000002;                        //ADC Continuous Mode Enable
+}
+
+void ADC_Base::ADC_continuous_disable(ADC_TypeDef *ADCxn){
+	ADCxn-> CR2 &= 0xFFFFFFFD;                        //ADC Continuous Mode Disable
 }
 
 void ADC_Base::ADC_start(ADC_TypeDef *ADCxn){

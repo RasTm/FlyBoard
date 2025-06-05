@@ -119,9 +119,13 @@ class ADC_Base{
 		ADCx-> SQR1 &= 0xFF0FFFFF;                                      //ADC Sequence Length Clear
 		ADCx-> SQR1 |= (adc_ch_count[active]<<20);						        //ADC Sequence Length Number
 	}
+
     static void ADC_enable_IRQ(ADC_TypeDef *ADCxn);
+    static void ADC_disable_IRQ(ADC_TypeDef *ADCxn);
     static void ADC_scan_enable(ADC_TypeDef *ADCxn);
+    static void ADC_scan_disable(ADC_TypeDef *ADCxn);
     static void ADC_continuous_enable(ADC_TypeDef *ADCxn);
+    static void ADC_continuous_disable(ADC_TypeDef *ADCxn);
 	static void ADC_start(ADC_TypeDef *ADCxn);
 	uint16_t ADC_single_conv();
 };
