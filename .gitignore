@@ -7,4 +7,7 @@
 *probe_proxy0.log
 out/
 Libraries/
-
+src/*.s
+src/*.h
+src/*.c
+*.gitignore
