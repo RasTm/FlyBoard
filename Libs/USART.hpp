@@ -83,6 +83,15 @@ class USART_Base{
 		USARTx-> BRR |= (Div_Mantissa<<4)+Div_Fraction;			//	Write to the USART_BAUDRATE Register
 	}
 
+	static void USART_enable_TXE_IRQ(USART_TypeDef *USARTxn);
+	static void USART_disable_TXE_IRQ(USART_TypeDef *USARTxn);
+	static void USART_enable_TC_IRQ(USART_TypeDef *USARTxn);
+	static void USART_disable_TC_IRQ(USART_TypeDef *USARTxn);
+	static void USART_enable_RXNEIE_IRQ(USART_TypeDef *USARTxn);
+	static void USART_disable_RXNEIE_IRQ(USART_TypeDef *USARTxn);
+	static void USART_enable_IDLE_IRQ(USART_TypeDef *USARTxn);
+	static void USART_disable_IDLE_IRQ(USART_TypeDef *USARTxn);
+
 	template<typename T> void Transmit(T &value);
 	void USART_Transmit(uint8_t *data, uint16_t size);
 	void USART_Transmit(const uint8_t *data);

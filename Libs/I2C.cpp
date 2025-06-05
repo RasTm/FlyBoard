@@ -1,11 +1,47 @@
 #include "I2C.hpp"
 
 /**
-  * @brief This method try to save i2c bus from i2c anknowledge lock
-  * @param  -
+  * @brief This method allows you to enable Error Interrupt
+  * @param *I2Cxn: Peripheral
   * @retval -
   */
-void I2C_Base::i2c_recover(I2C_TypeDef *I2Cxn){
+void I2C_Base::I2C_enable_Error_IRQ(I2C_TypeDef *I2Cxn){
+	I2Cxn-> CR2 |= 0x00010000;
+}
+
+/**
+  * @brief This method allows you to disable Error Interrupt
+  * @param *I2Cxn: Peripheral
+  * @retval -
+  */
+void I2C_Base::I2C_disable_Error_IRQ(I2C_TypeDef *I2Cxn){
+	I2Cxn-> CR2 &= 0xFFFEFFFF;
+}
+
+/**
+  * @brief This method allows you to enable Event Interrupt
+  * @param *I2Cxn: Peripheral
+  * @retval -
+  */
+void I2C_Base::I2C_enable_Event_IRQ(I2C_TypeDef *I2Cxn){
+	I2Cxn-> CR2 |= 0x00060000;                              //I2C Buffer and Event Interrupt Enable
+}
+
+/**
+  * @brief This method allows you to disable Event Interrupt
+  * @param *I2Cxn: Peripheral
+  * @retval -
+  */
+void I2C_Base::I2C_disable_Event_IRQ(I2C_TypeDef *I2Cxn){
+	I2Cxn-> CR2 &= 0xFFF9FFFF;                              //I2C Buffer and Event Interrupt Disable
+}
+
+/**
+  * @brief This method try to save i2c bus from i2c anknowledge lock
+  * @param  I2Cxn: Peripheral
+  * @retval -
+  */
+void I2C_Base::I2C_recover(I2C_TypeDef *I2Cxn){
 	if(I2Cxn == I2C1){
 		gpio_config(GPIOB,6,OUTPUT,PUSH,HIGH,UP,SyS);
 		gpio_config(GPIOB,7,OUTPUT,PUSH,HIGH,UP,SyS);
@@ -27,7 +63,6 @@ void I2C_Base::i2c_recover(I2C_TypeDef *I2Cxn){
 		reset_gpio_config(GPIOB,7);
 	}
 }
-
 
 /**
   * @brief  This method allows you to transmit single byte data through I2C interface.

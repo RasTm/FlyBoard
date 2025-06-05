@@ -5,7 +5,8 @@ volatile uint32_t Systick_counter = 0;
 
 /**
   * @brief  This method allows you to start timer counter.
-  * @retval
+  * @param  -
+  * @retval -
   */
 void Timer_Base::Counter_Start(){
 	Timerx-> CR1 |= 0x0001;
@@ -15,7 +16,7 @@ void Timer_Base::Counter_Start(){
   * @brief  This method allows you to generate PWM output.
   * @param  CH      : This variable holds which channel will be use for PWM output.
   * @param  Pwm_mode: This variable holds PWM mode (Look Timers.hpp and datasheet for more info)
-  * @retval
+  * @retval -
   */
 void Timer_Base::PWM(uint8_t CH, uint8_t Pwm_mode){
 
@@ -55,7 +56,7 @@ void Timer_Base::PWM(uint8_t CH, uint8_t Pwm_mode){
 /**
   * @brief  This function allows you to delay.
   * @param  count: This variable holds your delay time. (unit milliseconds)
-  * @retval
+  * @retval -
   */
 void delay(volatile uint32_t count){
 	Systick_counter = count;
@@ -71,7 +72,8 @@ uint32_t millis(){
 }
 /**
   * @brief  This interrupt function use for delay.
-  * @retval
+  * @param  -
+  * @retval -
   */
 extern "C" {void SysTick_Handler(void){
 	if(Systick_counter >= 0){Systick_counter--;}

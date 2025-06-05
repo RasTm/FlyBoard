@@ -113,4 +113,5 @@ class SPI_Base{
 	}
 	void write_byte_SPI(uint16_t data);
 	void multi_byte_write_SPI(std::vector<uint16_t> &data);
+	void multi_byte_write_SPI(uint16_t *data, uint8_t byte_count);
 };

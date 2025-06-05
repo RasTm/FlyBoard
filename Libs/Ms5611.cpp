@@ -47,7 +47,6 @@ void MS5611::get_raw_data(){
 		multi_byte_read_small(MS_ADDR, Raw_val, 3);
 		raw_temp = ((Raw_val[0]<<16)+(Raw_val[1]<<8)+Raw_val[2]);
 		conv_complete = true;
-		return;
 	}
 }
 

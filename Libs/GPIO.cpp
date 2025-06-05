@@ -40,6 +40,23 @@ void gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t Mode, uint8_t OTy
 	else{Gpio_Port-> AFR[0] |= (AFR<<(Pin*4));}
 }
 
+/*
+ * @brief This function reset all configuration for desired Gpio pin
+ * @param  Gpio_Port: This pointer holds which Gpio port you want to configure.
+ * @param  Pin      : This variable contains which port pin you want to configure.
+ * @retval -
+ */
+void reset_gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin){
+	Gpio_Port-> MODER   &= (0<<Pin*2);
+	Gpio_Port-> OTYPER  &= (0<<Pin);
+	Gpio_Port-> OSPEEDR &= (0<<Pin*2);
+	Gpio_Port-> PUPDR   &= (0<<Pin*2);
+	Gpio_Port-> BSRRH   &= (1<<Pin);
+
+	if(Pin>7){Gpio_Port-> AFR[1] |= (SyS<<((Pin-8)*4));}
+	else{Gpio_Port-> AFR[0] |= (SyS<<(Pin*4));}
+}
+
 /**
   * @brief  This function allows you to write Gpio pins.
   * @param  Gpio_Port: This pointer holds which Gpio port you want to configure.
@@ -67,23 +84,6 @@ uint8_t read_gpio_io(GPIO_TypeDef *Gpio_Port, uint8_t Pin){
 	return (Gpio_Port-> IDR &= (1<<Pin));
 }
 
-/*
- * @brief This function reset all configuration for desired Gpio pin
- * @param  Gpio_Port: This pointer holds which Gpio port you want to configure.
- * @param  Pin      : This variable contains which port pin you want to configure.
- * @retval -
- */
-void reset_gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin){
-	Gpio_Port-> MODER   &= (0<<Pin*2);
-	Gpio_Port-> OTYPER  &= (0<<Pin);
-	Gpio_Port-> OSPEEDR &= (0<<Pin*2);
-	Gpio_Port-> PUPDR   &= (0<<Pin*2);
-	Gpio_Port-> BSRRH   &= (1<<Pin);
-
-	if(Pin>7){Gpio_Port-> AFR[1] |= (SyS<<((Pin-8)*4));}
-	else{Gpio_Port-> AFR[0] |= (SyS<<(Pin*4));}
-
-}
 /**
   * @brief  This function allows you to configure External Interrupt pins.
   *

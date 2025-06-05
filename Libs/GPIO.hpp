@@ -35,11 +35,11 @@ enum Alternate_: uint8_t {SyS, TIM1_2, TIM3__5, TIM8__11, I2C1__3, SPI1_2, SPI_3
 
 void gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t Mode, uint8_t OType, uint8_t Speed, uint8_t Pupdr, Alternate_ AFR);
 
+void reset_gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin);
+
 void write_gpio_io(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t set_reset);
 
 uint8_t read_gpio_io(GPIO_TypeDef *Gpio_Port, uint8_t Pin);
-
-void reset_gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin);
 
 void Set_Ext_Interrupt(uint8_t Exti, uint8_t GPIO_Port, uint8_t r_f);
 

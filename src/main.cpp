@@ -59,8 +59,9 @@ float heading_degree = 0.0;
 PPM remote_ppm;
 
 //ADC
-uint16_t adc_result[2] = {0};
-uint8_t adc_ch = 0;
+uint16_t adc_avg[2] = {0};
+uint8_t adc_count = 0;
+float adc[2];
 
 void Program_timer(){
 	RCC-> APB1ENR |= 0x00000100;             //Timer14 Clock Enable
@@ -89,10 +90,10 @@ int main(void){
 	Clock_init();
 	Program_timer();
 	PPM_read_timer();
-	I2C_Base::i2c_recover(I2C1);
+	I2C_Base::I2C_recover(I2C1);
 
-	ADC_Base batt_V(ADC_1, 1, 0, 0);                                         //GPIOA 1, first, sample = 7
-	ADC_Base batt_A(ADC_1, 0, 1, 0);                                         //GPIOA 0, second, sample = 7
+	ADC_Base batt_V(ADC_1, 1, 0, 7);                                         //GPIOA 1, first, sample = 7
+	ADC_Base batt_A(ADC_1, 0, 1, 7);                                         //GPIOA 0, second, sample = 7
 	ADC_Base::ADC_enable_IRQ(ADC1);
 	ADC_Base::ADC_scan_enable(ADC1);
 	ADC_Base::ADC_continuous_enable(ADC1);
@@ -129,7 +130,6 @@ int main(void){
 //	delay(50);
 //	Serial.USART_Transmit(clear_line);
 //	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\tMPU Hz\tMS Hz\n\r");
-	Serial.USART_Transmit("Roll\tPitch\tAltitude\tPreassure\tTemp\tChannels\n\r");
 
 	interrupt_init();
 
@@ -181,28 +181,32 @@ int main(void){
 			ms5611.calculate_absolute_val(data,altitude);
 		}
 
+		adc[0] = ((3.3/4096.0)*(float)(adc_avg[0]+300))*10;
+		adc[1] = ((3.3/4096.0)*(float)(adc_avg[1]+300));
+
 //		if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
 //			hmc_Hz_counter++;
 //			hmc.mag_conv(heading_degree);
 //		}
 		if(read_index % 2 ==0){
-			Serial.Transmit(final_roll);
+//			Serial.Transmit(final_roll);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(final_pitch);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(altitude);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(data[0]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(data[1]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(mpu_Hz);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(ms_Hz);
+//			Serial.USART_Transmit("\t");
+			Serial.Transmit(adc[0]);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(final_pitch);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(altitude);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(data[0]);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(data[1]);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(mpu_Hz);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(ms_Hz);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(adc_result[0]);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(adc_result[1]);
+			Serial.Transmit(adc[1]);
+//			Serial.Transmit(adc_avg[1]);
 /*			Serial.USART_Transmit("\t");
 			Serial.Transmit(remote_ppm.channelX[2]);
 			Serial.USART_Transmit("\t");
@@ -218,9 +222,9 @@ int main(void){
 			Serial.USART_Transmit("\n\r");
 
 			sayac2++;
-			if(sayac2 == 5){
+			if(sayac2 == 10){
 				sayac2 = 0;
-				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row beginnig erase everything below
+				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row begining erase everything below
 			}
 		}
 	}
@@ -350,10 +354,9 @@ extern "C" { void USART2_IRQHandler(void){
 extern "C" { void ADC_IRQHandler(void){
 	if(ADC1-> SR & 0x00000002){
 		ADC1-> SR = 0;
-		adc_result[adc_ch] = ADC1-> DR;             //First V, Then A
-		adc_ch++;
-		if(adc_ch == 2) {adc_ch = 0;}
+		adc_avg[adc_count] = ADC1-> DR;                           //First V, Then A
+		adc_count++;
+		if(adc_count == 2){adc_count = 0;}
 		Clr_Interrupt_PD(ADC_IRQn);
 	}
 }}
-

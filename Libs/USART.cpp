@@ -1,10 +1,82 @@
 #include "USART.hpp"
 
 /**
+  * @brief This method allows you to enable Transmit Data Register Empty Interrupt
+  * @param *USARTxn: Peripheral
+  * @retval -
+  */
+void USART_Base::USART_enable_TXE_IRQ(USART_TypeDef *USARTxn){
+	USARTxn -> CR1 |= 0x00000080;
+}
+
+/**
+  * @brief This method allows you to disable Transmit Data Register Empty Interrupt
+  * @param *USARTxn: Peripheral
+  * @retval -
+  */
+void USART_Base::USART_disable_TXE_IRQ(USART_TypeDef *USARTxn){
+	USARTxn -> CR1 &= 0xFFFFFF7F;
+}
+
+/**
+  * @brief This method allows you to enable Transmit Complete Interrupt
+  * @param *USARTxn: Peripheral
+  * @retval -
+  */
+void USART_Base::USART_enable_TC_IRQ(USART_TypeDef *USARTxn){
+	USARTxn -> CR1 |= 0x00000040;
+}
+
+/**
+  * @brief This method allows you to disable Transmit Complete Interrupt
+  * @param *USARTxn: Peripheral
+  * @retval -
+  */
+void USART_Base::USART_disable_TC_IRQ(USART_TypeDef *USARTxn){
+	USARTxn -> CR1 &= 0xFFFFFFBF;
+}
+
+/**
+  * @brief This method allows you to enable Read Data Register NOT Empty Interrupt
+  * @param *USARTxn: Peripheral
+  * @retval -
+  */
+void USART_Base::USART_enable_RXNEIE_IRQ(USART_TypeDef *USARTxn){
+	USARTxn -> CR1 |= 0x00000020;
+}
+
+/**
+  * @brief This method allows you to disable Read Data Register NOT Empty Interrupt
+  * @param *USARTxn: Peripheral
+  * @retval -
+  */
+void USART_Base::USART_disable_RXNEIE_IRQ(USART_TypeDef *USARTxn){
+	USARTxn -> CR1 &= 0xFFFFFFDF;
+}
+
+/**
+  * @brief This method allows you to enable Idle Line Interrupt
+  * @param *USARTxn: Peripheral
+  * @retval -
+  */
+void USART_Base::USART_enable_IDLE_IRQ(USART_TypeDef *USARTxn){
+	USARTxn -> CR1 |= 0x00000010;
+}
+
+/**
+  * @brief This method allows you to disable Idle Line Interrupt
+  * @param *USARTxn: Peripheral
+  * @retval -
+  */
+void USART_Base::USART_disable_IDLE_IRQ(USART_TypeDef *USARTxn){
+	USARTxn -> CR1 &= 0xFFFFFFEF;
+}
+
+/**
   * @brief  This method allows you to transmit data through USART interface.
   * @param  data: This variable is what do you want to be transmit.
   * @param  size: This variable holds how many data do you want to transmit.
-  * @retval
+  * @retval -
   */
 void USART_Base::USART_Transmit(uint8_t *data, uint16_t size){
 	USARTx-> CR1  = 0;						//Reset USART CR1 Register
@@ -49,7 +121,7 @@ void USART_Base::USART_Transmit(const char *data){
   * @brief  This method allows you to send float data through USART interface.
   * @param  data: This variable is your float data.
   * @param  lenght: This variable is your length of data in digits.
-  * @retval
+  * @retval -
   */
 void USART_Base::USART_Transmit_float(float data, uint8_t length){
 	char string_num[length];
@@ -61,7 +133,7 @@ void USART_Base::USART_Transmit_float(float data, uint8_t length){
 /**
   * @brief  This method allows you to receive data through USART interface.
   * @param  data: This variable is where to be save received data.
-  * @retval
+  * @retval -
   */
 void USART_Base::USART_Receive(std::vector<uint8_t> data){
 	USARTx-> CR1  = 0;						//Reset USART CR1 Register
@@ -81,7 +153,7 @@ void USART_Base::USART_Receive(std::vector<uint8_t> data){
   * @brief  This method allows you to receive data through USART interface.
   * @param  data: This variable is where to be save received data.
   * @param  size: This variable holds how many data do you want to receive.
-  * @retval
+  * @retval -
   */
 void USART_Base::USART_Receive(uint8_t *data, uint8_t size){
 	USARTx-> CR1  = 0;						//Reset USART CR1 Register

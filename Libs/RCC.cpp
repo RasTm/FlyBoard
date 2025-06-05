@@ -75,9 +75,7 @@ void RTC_BKP_Write(uint8_t* text, uint8_t n){
 
 /**
   * @brief  This function allows you to read data from the RTC_BKP registers.
-  *
   * @param  data: This pointer holds your data to be read
-  *
   * @retval -
   */
 void RTC_BKP_Read(uint8_t* data){

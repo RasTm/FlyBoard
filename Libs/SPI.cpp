@@ -30,7 +30,22 @@ void SPI_Base::multi_byte_write_SPI(std::vector<uint16_t> &data){
         while(!(SPIx-> SR & 0x0080)){}      //Checking BSY bit (Busy)
 
 	    SPIx-> CR1 &= 0xFFBF;				//Clearing SPE Bit
-	    uint8_t a = 210;
-	    while(a){a -= 1;}
+//	    uint8_t a = 210;
+//	    while(a){a -= 1;}
+	}
+}
+
+void SPI_Base::multi_byte_write_SPI(uint16_t *data, uint8_t byte_count){
+	for(uint8_t i=0;i<byte_count; i++){
+        SPIx-> CR1 |= 0x0040;               //SPI Enable
+
+        while(!(SPIx-> SR & 0x0002)){}      //Checking TXE bit (Transmit Buffer Empty)
+	    SPIx-> DR   = data[i];
+        while(!(SPIx-> SR & 0x0002));       //Checking TXE bit (Transmit Buffer Empty)
+        while(!(SPIx-> SR & 0x0080)){}      //Checking BSY bit (Busy)
+
+	    SPIx-> CR1 &= 0xFFBF;				//Clearing SPE Bit
+//	    uint8_t a = 210;
+//	    while(a){a -= 1;}
 	}
 }
