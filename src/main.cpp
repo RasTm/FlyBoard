@@ -60,8 +60,8 @@ PPM remote_ppm;
 
 //ADC
 uint16_t adc_avg[2] = {0};
-uint8_t adc_count = 0;
 float adc[2];
+bool adc_read_able = false;
 
 void Program_timer(){
 	RCC-> APB1ENR |= 0x00000100;             //Timer14 Clock Enable
@@ -78,11 +78,26 @@ void PPM_read_timer(){
 	TIM13-> CR1    |= 0x0001;                 //Timer13 Counter Start
 	gpio_config(GPIOE,11,INPUT,PUSH,LOW,UP,SyS);   //GPIOE 11 Configure
 }
+void DMA2_init(){
+	DMA2_Stream0-> CR |=
+			DMA_SxCR_MSIZE_0 |                //16 bit Memory Adress Size
+			DMA_SxCR_PSIZE_0 |                //16 bit Perpipheral Adress Size (ADC1-> DR)
+			DMA_SxCR_MINC    |                //Memory Increment Mode
+			DMA_SxCR_CIRC    |                //Circular Mode
+			DMA_SxCR_TCIE;                    //Transfer Complete Interrupt
+
+	DMA2_Stream0-> NDTR = 2;
+	DMA2_Stream0-> PAR  = (uint32_t) &ADC1->DR;
+	DMA2_Stream0-> M0AR = (uint32_t) &adc_avg[0];
+
+	DMA2_Stream0->CR |= 0x00000001;
+}
 void interrupt_init(){
 	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,1);
 	Set_Interrupt(TIM8_UP_TIM13_IRQn,2);
 	Set_Interrupt(EXTI15_10_IRQn,0);
-	Set_Interrupt(ADC_IRQn,3);
+//	Set_Interrupt(ADC_IRQn,3);
+	Set_Interrupt(DMA2_Stream0_IRQn,0);
 	Set_Ext_Interrupt(11,GPIO_E,RISING);
 }
 
@@ -90,11 +105,13 @@ int main(void){
 	Clock_init();
 	Program_timer();
 	PPM_read_timer();
+	DMA2_init();
 	I2C_Base::I2C_recover(I2C1);
 
 	ADC_Base batt_V(ADC_1, 1, 0, 7);                                         //GPIOA 1, first, sample = 7
 	ADC_Base batt_A(ADC_1, 0, 1, 7);                                         //GPIOA 0, second, sample = 7
-	ADC_Base::ADC_enable_IRQ(ADC1);
+	ADC_Base::ADC_dma_enable(ADC1);
+//	ADC_Base::ADC_enable_IRQ(ADC1);
 	ADC_Base::ADC_scan_enable(ADC1);
 	ADC_Base::ADC_continuous_enable(ADC1);
 	ADC_Base::ADC_start(ADC1);
@@ -180,11 +197,15 @@ int main(void){
 			ms_Hz_counter++;
 			ms5611.calculate_absolute_val(data,altitude);
 		}
+		if(adc_read_able){
+			if(adc_avg[0] > 520){
+				adc[0] = ((3.3/4096.0)*(float)(adc_avg[0]+50))*10;
+			}
+			adc[1] = ((3.3/4096.0)*(float)(adc_avg[1]))/0.028;
+			adc_read_able = false;
+		}
 
-		adc[0] = ((3.3/4096.0)*(float)(adc_avg[0]+300))*10;
-		adc[1] = ((3.3/4096.0)*(float)(adc_avg[1]+300));
-
-//		if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
+//		0,0008056640625 if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
 //			hmc_Hz_counter++;
 //			hmc.mag_conv(heading_degree);
 //		}
@@ -204,7 +225,7 @@ int main(void){
 //			Serial.Transmit(ms_Hz);
 //			Serial.USART_Transmit("\t");
 			Serial.Transmit(adc[0]);
-			Serial.USART_Transmit("\t");
+			Serial.USART_Transmit("V \t");
 			Serial.Transmit(adc[1]);
 //			Serial.Transmit(adc_avg[1]);
 /*			Serial.USART_Transmit("\t");
@@ -219,7 +240,7 @@ int main(void){
 			Serial.Transmit(remote_ppm.channelX[6]);
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(remote_ppm.channelX[7]);*/
-			Serial.USART_Transmit("\n\r");
+			Serial.USART_Transmit("A \n\r");
 
 			sayac2++;
 			if(sayac2 == 10){
@@ -351,12 +372,10 @@ extern "C" { void USART2_IRQHandler(void){
 	}
 }}
 
-extern "C" { void ADC_IRQHandler(void){
-	if(ADC1-> SR & 0x00000002){
-		ADC1-> SR = 0;
-		adc_avg[adc_count] = ADC1-> DR;                           //First V, Then A
-		adc_count++;
-		if(adc_count == 2){adc_count = 0;}
-		Clr_Interrupt_PD(ADC_IRQn);
+extern "C" { void DMA2_Stream0_IRQHandler(void){
+	if(DMA2-> LISR & 0x00000020){
+		DMA2-> LIFCR = 0x00000020;
+		adc_read_able = true;
+		Clr_Interrupt_PD(DMA2_Stream0_IRQn);
 	}
 }}
