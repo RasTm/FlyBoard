@@ -26,6 +26,8 @@ void Clock_init(){
 
 	RCC-> APB2ENR |= 0x00004000;	//System Configuration Controller Clock Enable
 
+	RCC-> AHB1ENR |= 0x00600000;    //DMA1 and DMA2 Clock Enable
+
 	RCC-> AHB1ENR |= 0x000001FF;	//All GPIO Port Clocks Are Enable
 
     SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
