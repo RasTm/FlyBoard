@@ -120,6 +120,7 @@ class ADC_Base{
 		ADCx-> SQR1 |= (adc_ch_count[active]<<20);						        //ADC Sequence Length Number
 	}
 
+	static void ADC_dma_enable(ADC_TypeDef *ADCxn);
     static void ADC_enable_IRQ(ADC_TypeDef *ADCxn);
     static void ADC_disable_IRQ(ADC_TypeDef *ADCxn);
     static void ADC_scan_enable(ADC_TypeDef *ADCxn);

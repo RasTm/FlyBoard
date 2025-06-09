@@ -2,6 +2,10 @@
 
 uint8_t ADC_Base::adc_ch_count[3] = {0, 0, 0};
 
+void ADC_Base::ADC_dma_enable(ADC_TypeDef *ADCxn){
+	ADCxn-> CR2 |= 0x00000300;                        //ADC DMA Request Enable In Every Conversion
+}
+
 void ADC_Base::ADC_enable_IRQ(ADC_TypeDef *ADCxn){
 	ADCxn-> CR1 |= 0x00000020;                        //ADC EOC IRQ Enable
 }
