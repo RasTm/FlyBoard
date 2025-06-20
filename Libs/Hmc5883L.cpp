@@ -10,10 +10,9 @@ void HMC5883::config(){
 void HMC5883::mag_read(uint16_t *data){
 	uint8_t pre_data[6] = {0};
 	multi_byte_read(HMC_ADDR,HMC_DATA_X_MSB,pre_data,6);
-	data[0] = ((pre_data[0]<<8) + pre_data[1]);
-	data[1] = ((pre_data[2]<<8) + pre_data[3]);
-	data[2] = ((pre_data[4]<<8) + pre_data[5]);
-	write_byte_small(HMC_ADDR,HMC_DATA_X_MSB);
+	data[0] = ((pre_data[0]<<8) | pre_data[1]);
+	data[1] = ((pre_data[2]<<8) | pre_data[3]);
+	data[2] = ((pre_data[4]<<8) | pre_data[5]);
 }
 
 void HMC5883::mag_conv(float &heading_deg){
@@ -30,5 +29,6 @@ void HMC5883::mag_conv(float &heading_deg){
 	if(heading > 2*PI) heading -= 2*PI;
 
 	heading_deg = heading * RAD_TO_DEG;
+	write_byte_small(HMC_ADDR,HMC_DATA_X_MSB);
 }
 
