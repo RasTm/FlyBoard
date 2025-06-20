@@ -14,10 +14,10 @@
 #include "../Libs/GPIO.hpp"
 #include "../Libs/Nvic.hpp"
 #include "../Libs/USART.hpp"
-#include "../Libs/NeoM8.hpp"
 #include "../Libs/Remote.hpp"
 #include "../Libs/Ms5611.hpp"
 #include "../Libs/Mpu6050.hpp"
+#include "../Libs/Hmc5883L.hpp"
 
 #define PROG_BUFF_SIZE 12
 #define MPU_FLAG 1
@@ -95,9 +95,9 @@ void DMA2_init(){
 void interrupt_init(){
 	Set_Interrupt(TIM8_TRG_COM_TIM14_IRQn,1);
 	Set_Interrupt(TIM8_UP_TIM13_IRQn,2);
-	Set_Interrupt(EXTI15_10_IRQn,0);
-//	Set_Interrupt(ADC_IRQn,3);
 	Set_Interrupt(DMA2_Stream0_IRQn,0);
+	Set_Interrupt(EXTI15_10_IRQn,0);
+
 	Set_Ext_Interrupt(11,GPIO_E,RISING);
 }
 
@@ -111,10 +111,8 @@ int main(void){
 	ADC_Base batt_V(ADC_1, 1, 0, 7);                                         //GPIOA 1, first, sample = 7
 	ADC_Base batt_A(ADC_1, 0, 1, 7);                                         //GPIOA 0, second, sample = 7
 	ADC_Base::ADC_dma_enable(ADC1);
-//	ADC_Base::ADC_enable_IRQ(ADC1);
 	ADC_Base::ADC_scan_enable(ADC1);
 	ADC_Base::ADC_continuous_enable(ADC1);
-	ADC_Base::ADC_start(ADC1);
 
 	USART_Base Serial(USART_1,921600);
 	Serial.USART_Transmit(motivation);
@@ -122,7 +120,6 @@ int main(void){
 	Serial.USART_Transmit(clear_disp);
 	Serial.USART_Transmit(project_header);
 
-	NEOM8 gps(USART_2,9600);
 	USART_Base Telemetry(USART_6,9600);
 
 	Serial.USART_Transmit("MPU6050 Starting");
@@ -141,14 +138,15 @@ int main(void){
 	ms5611.get_coefficent();
 	Serial.USART_Transmit(clear_line);
 
-//	Serial.USART_Transmit("HMC5883L Starting");
-//	QMC5883 hmc(I2C1);
-//	hmc.config();
-//	delay(50);
-//	Serial.USART_Transmit(clear_line);
-//	Serial.USART_Transmit("Roll\t\tPitch\t\tAltitude\tMPU Hz\tMS Hz\n\r");
+	Serial.USART_Transmit("HMC5883L Starting");
+	HMC5883 hmc(I2C1);
+	hmc.config();
+	delay(50);
+	Serial.USART_Transmit(clear_line);
+	Serial.USART_Transmit("Roll\tPitch\tAltitude\tPreassure\tTemp\tHeading\n\r");
 
 	interrupt_init();
+	ADC_Base::ADC_start(ADC1);
 
 	while (1){
 		if(program_buffer[read_index] != 0){read_index++;}
@@ -197,6 +195,12 @@ int main(void){
 			ms_Hz_counter++;
 			ms5611.calculate_absolute_val(data,altitude);
 		}
+
+	    if(program_buffer[read_index] == HMC_FLAG){
+			hmc_Hz_counter++;
+			hmc.mag_conv(heading_degree);
+		}
+
 		if(adc_read_able){
 			if(adc_avg[0] > 520){
 				adc[0] = ((3.3/4096.0)*(float)(adc_avg[0]+50))*10;
@@ -205,45 +209,36 @@ int main(void){
 			adc_read_able = false;
 		}
 
-//		0,0008056640625 if(program_buffer[read_index] == HMC_FLAG && hmc.read_able()){
-//			hmc_Hz_counter++;
-//			hmc.mag_conv(heading_degree);
-//		}
 		if(read_index % 2 ==0){
-//			Serial.Transmit(final_roll);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(final_pitch);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(altitude);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(data[0]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(data[1]);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(mpu_Hz);
-//			Serial.USART_Transmit("\t");
-//			Serial.Transmit(ms_Hz);
-//			Serial.USART_Transmit("\t");
-			Serial.Transmit(adc[0]);
-			Serial.USART_Transmit("V \t");
-			Serial.Transmit(adc[1]);
-//			Serial.Transmit(adc_avg[1]);
-/*			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[2]);
+			Serial.Transmit(final_roll);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[3]);
+			Serial.Transmit(final_pitch);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[4]);
+			Serial.Transmit(altitude);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[5]);
+			Serial.Transmit(data[0]);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[6]);
+			Serial.Transmit(data[1]);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(remote_ppm.channelX[7]);*/
-			Serial.USART_Transmit("A \n\r");
-
+			Serial.Transmit(heading_degree);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(hmc_Hz);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[2]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[3]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[4]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[5]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[6]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[7]);
+			Serial.USART_Transmit("\n\r");
 			sayac2++;
-			if(sayac2 == 10){
+
+			if(sayac2 == 5){
 				sayac2 = 0;
 				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row begining erase everything below
 			}
@@ -259,7 +254,7 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 		hmc_tick++;
 		program_Hz_counter++;
 
-		if(write_index == PROG_BUFF_SIZE && read_index < PROG_BUFF_SIZE){
+		if(write_index == PROG_BUFF_SIZE-1 && read_index < PROG_BUFF_SIZE){
 			write_index = 0;
 			buffer_write_able = false;
 		}
@@ -280,13 +275,13 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 					write_index++;
 				}
 			}
-//			if(hmc_tick > 6){
-//				hmc_tick = 0;
-//				if(write_index < 12){
-//					program_buffer[write_index] = HMC_FLAG;
-//					write_index++;
-//				}
-//			}
+			if(hmc_tick > 10){
+				hmc_tick = 0;
+				if(write_index < 12){
+					program_buffer[write_index] = HMC_FLAG;
+					write_index++;
+				}
+			}
 		}
 
 		if(program_Hz_counter == 1000){
@@ -360,18 +355,6 @@ extern "C" { void TIM8_UP_TIM13_IRQHandler(void){
 	}
 }}
 
-extern "C" { void USART2_IRQHandler(void){
-	if(USART2-> SR & 0x00000020){
-		USART2-> SR = 0;
-//		gps.count++;
-//		gps.nmea[gps.count] = USART2-> DR;
-//
-//		if(gps.count > 1024-1){
-//			gps.count = 0;
-//		}
-	}
-}}
-
 extern "C" { void DMA2_Stream0_IRQHandler(void){
 	if(DMA2-> LISR & 0x00000020){
 		DMA2-> LIFCR = 0x00000020;
@@ -379,3 +362,4 @@ extern "C" { void DMA2_Stream0_IRQHandler(void){
 		Clr_Interrupt_PD(DMA2_Stream0_IRQn);
 	}
 }}
+
