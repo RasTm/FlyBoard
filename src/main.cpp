@@ -24,7 +24,8 @@
 #define MS_FLAG  2
 #define HMC_FLAG 3
 
-uint8_t program_buffer[PROG_BUFF_SIZE] = {0}, write_index = 0, read_index = 0, buffer_write_able = true;
+uint8_t program_buffer[PROG_BUFF_SIZE] = {0}, buffer_write_able = true;
+volatile uint8_t write_index = 0, read_index = 0;
 
 uint8_t  sayac2=0;
 uint32_t mpu_Hz_counter=0, mpu_Hz=0, mpu_tick=0,
@@ -60,6 +61,7 @@ PPM remote_ppm;
 
 //ADC
 uint16_t adc_avg[2] = {0};
+uint16_t local_adc[2] = {0};
 float adc[2];
 bool adc_read_able = false;
 
@@ -138,10 +140,10 @@ int main(void){
 	ms5611.get_coefficent();
 	Serial.USART_Transmit(clear_line);
 
-	Serial.USART_Transmit("HMC5883L Starting");
-	HMC5883 hmc(I2C1);
-	hmc.config();
-	delay(50);
+//	Serial.USART_Transmit("HMC5883L Starting");
+//	HMC5883 hmc(I2C1);
+//	hmc.config();
+//	delay(50);
 	Serial.USART_Transmit(clear_line);
 	Serial.USART_Transmit("Roll\tPitch\tAltitude\tPreassure\tTemp\tHeading\n\r");
 
@@ -196,16 +198,16 @@ int main(void){
 			ms5611.calculate_absolute_val(data,altitude);
 		}
 
-	    if(program_buffer[read_index] == HMC_FLAG){
-			hmc_Hz_counter++;
-			hmc.mag_conv(heading_degree);
-		}
+//	    if(program_buffer[read_index] == HMC_FLAG){
+//			hmc_Hz_counter++;
+//			hmc.mag_conv(heading_degree);
+//		}
 
 		if(adc_read_able){
-			if(adc_avg[0] > 520){
-				adc[0] = ((3.3/4096.0)*(float)(adc_avg[0]+50))*10;
+			if(local_adc[0] > 520){
+				adc[0] = ((3.3/4096.0)*(float)(local_adc[0]+50))*10;
 			}
-			adc[1] = ((3.3/4096.0)*(float)(adc_avg[1]))/0.028;
+			adc[1] = ((3.3/4096.0)*(float)(local_adc[1]))/0.028;
 			adc_read_able = false;
 		}
 
@@ -223,6 +225,10 @@ int main(void){
 			Serial.Transmit(heading_degree);
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(hmc_Hz);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(adc[0]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(adc[1]);
 //			Serial.USART_Transmit("\t");
 //			Serial.Transmit(remote_ppm.channelX[2]);
 //			Serial.USART_Transmit("\t");
@@ -275,13 +281,13 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 					write_index++;
 				}
 			}
-			if(hmc_tick > 10){
-				hmc_tick = 0;
-				if(write_index < 12){
-					program_buffer[write_index] = HMC_FLAG;
-					write_index++;
-				}
-			}
+//			if(hmc_tick > 10){
+//				hmc_tick = 0;
+//				if(write_index < 12){
+//					program_buffer[write_index] = HMC_FLAG;
+//					write_index++;
+//				}
+//			}
 		}
 
 		if(program_Hz_counter == 1000){
@@ -358,6 +364,8 @@ extern "C" { void TIM8_UP_TIM13_IRQHandler(void){
 extern "C" { void DMA2_Stream0_IRQHandler(void){
 	if(DMA2-> LISR & 0x00000020){
 		DMA2-> LIFCR = 0x00000020;
+		local_adc[0] = adc_avg[0];
+		local_adc[1] = adc_avg[1];
 		adc_read_able = true;
 		Clr_Interrupt_PD(DMA2_Stream0_IRQn);
 	}
