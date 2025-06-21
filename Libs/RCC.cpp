@@ -4,19 +4,44 @@ void Clock_init(){
     #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
         SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
     #endif
-	RCC-> CR  = 0x00000000;			//Reset Clock Control Register
-	RCC-> CR |= 0x01090000;			//HSE On (Write 1 On 5th Step)
-									//CSS On (Write 8 On 5th Step)
-									//PLL On
-	RCC-> PLLCFGR = 0;
-	RCC-> PLLCFGR |= 0x07405408;	//HSE Clock Divided By 8 for VCO Input Frequency (PLLM Bits)
-//				  		|| ||-->	VCO Output Frequency = 336Mhz (336 = VCO Input Frequency(1) * PLLN Bits(336))
-//				  		||----->    HSE Selected PLL Source
-//				  	  	|------>	USB OTG FS Clock Frequency = 48Mhz (48 = VCO Frequency(336) / PLLQ Bits(7))
-	RCC-> CFGR 	  |= 0x00089402;	//PLL Selected As System Clock
+
+    RCC->CR |= (uint32_t)0x00000001;//Set HSION Bit
+
+    RCC->CFGR = 0x00000000;         //Reset CFGR Register
+
+    RCC->CR &= (uint32_t)0xFEF6FFFF;//Reset HSEON, CSSON and PLLON Bits
+
+    RCC->PLLCFGR = 0x24003010;      //Reset PLLCFGR Register
+
+    RCC->CR &= (uint32_t)0xFFFBFFFF;//Reset HSEBYP Bit
+
+    RCC->CIR = 0x00000000;          //Disable All Interrupts
+
+//	RCC-> CR  = 0x00000000;			//Reset Clock Control Register
+	RCC-> CR |= 0x00010000;         //HSE On (Write 1 On 5th Step)
+	while(!(RCC-> CR & 0x00020000));//Wait For HSE Ready Flag Set
+
+    RCC->APB1ENR |= RCC_APB1ENR_PWREN; //Select regulator voltage output Scale 1 mode, System frequency up to 168 MHz
+    PWR->CR |= PWR_CR_VOS;
+
+//	RCC-> PLLCFGR  = 0;
+	RCC-> CFGR 	  |= 0x00089400;
 //						  |||-->	PPRE1 (APB1 Divided By 4 = 42Mhz)
 //						  ||--->	PPRE2 (APB2 Divided By 2 = 84Mhz)
 //						  |---->	HSE Clock Divided By 8 For RTC Clock
+
+	RCC-> PLLCFGR  = 0x07405408;	//HSE Clock Divided By 8 for VCO Input Frequency (PLLM Bits)
+//				  		|| ||-->	VCO Output Frequency = 336Mhz (336 = VCO Input Frequency(1) * PLLN Bits(336))
+//				  		||----->    HSE Selected PLL Source
+//				  	  	|------>	USB OTG FS Clock Frequency = 48Mhz (48 = VCO Frequency(336) / PLLQ Bits(7))
+
+	RCC-> CR |= 0x01000000;			//PLL On (Write 1 On 7th Step)
+	while(!(RCC-> CR & 0x02000000));//Wait For PLL Ready Flag Set
+	RCC-> CR |= 0x00080000;         //CSS On (Write 8 On 5th Step)
+
+	FLASH->ACR = FLASH_ACR_PRFTEN |FLASH_ACR_ICEN |FLASH_ACR_DCEN |FLASH_ACR_LATENCY_5WS;
+
+	RCC-> CFGR    |= 0x00000002;    //PLL Selected As System Clock
 
 	RCC-> AHB1ENR |= 0x00040000;	//Backup SRAM Clock Enable
 
@@ -30,14 +55,12 @@ void Clock_init(){
 
 	RCC-> AHB1ENR |= 0x000001FF;	//All GPIO Port Clocks Are Enable
 
-    SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
-
     DBGMCU-> APB1FZ |= 0x00000080;  //TIM13 Counter Stop When Core Halted
 
 	SysTick-> LOAD = 0;
 	SysTick-> LOAD = 167999;		//Systick Load is 167,999 (168 Million Pulse each second/ 167,999 pulse = 1 millisecond)
 
-	SysTick-> CTRL|= 0x00000007;	//Systick Clock Source AHB(Processor Clock), SysTick Interrupt Enable, Systick Enable
+	SysTick-> CTRL|= 0x00000007;	//Systick Clock Source AHB(Processor Clock)
 }
 
 /**
