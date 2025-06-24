@@ -116,7 +116,7 @@ int main(void){
 	ADC_Base::ADC_scan_enable(ADC1);
 	ADC_Base::ADC_continuous_enable(ADC1);
 
-	USART_Base Serial(USART_1,921600);
+	USART_Base Serial(USART_1,9600);
 	Serial.USART_Transmit(motivation);
 	delay(1000);
 	Serial.USART_Transmit(clear_disp);
@@ -145,7 +145,7 @@ int main(void){
 //	hmc.config();
 //	delay(50);
 	Serial.USART_Transmit(clear_line);
-	Serial.USART_Transmit("Roll\tPitch\tAltitude\tPreassure\tTemp\tHeading\n\r");
+	Serial.USART_Transmit("Altitude\tVolt\tAmper\tPressure\tTemp\tRoll\tPitch\n\r");
 
 	interrupt_init();
 	ADC_Base::ADC_start(ADC1);
@@ -212,23 +212,19 @@ int main(void){
 		}
 
 		if(read_index % 2 ==0){
-			Serial.Transmit(final_roll);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(final_pitch);
-			Serial.USART_Transmit("\t");
 			Serial.Transmit(altitude);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(adc[0]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(adc[1]);
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(data[0]);
 			Serial.USART_Transmit("\t");
 			Serial.Transmit(data[1]);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(heading_degree);
+			Serial.Transmit(final_roll);
 			Serial.USART_Transmit("\t");
-			Serial.Transmit(hmc_Hz);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(adc[0]);
-			Serial.USART_Transmit("\t");
-			Serial.Transmit(adc[1]);
+			Serial.Transmit(final_pitch);
 //			Serial.USART_Transmit("\t");
 //			Serial.Transmit(remote_ppm.channelX[2]);
 //			Serial.USART_Transmit("\t");
@@ -242,12 +238,12 @@ int main(void){
 //			Serial.USART_Transmit("\t");
 //			Serial.Transmit(remote_ppm.channelX[7]);
 			Serial.USART_Transmit("\n\r");
-			sayac2++;
-
-			if(sayac2 == 5){
-				sayac2 = 0;
-				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row begining erase everything below
-			}
+//			sayac2++;
+//
+//			if(sayac2 == 5){
+//				sayac2 = 0;
+//				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row begining erase everything below
+//			}
 		}
 	}
 }
