@@ -43,24 +43,58 @@ void I2C_Base::I2C_disable_Event_IRQ(I2C_TypeDef *I2Cxn){
   */
 void I2C_Base::I2C_recover(I2C_TypeDef *I2Cxn){
 	if(I2Cxn == I2C1){
-		gpio_config(GPIOB,6,OUTPUT,PUSH,HIGH,UP,SyS);
-		gpio_config(GPIOB,7,OUTPUT,PUSH,HIGH,UP,SyS);
+		gpio_config(GPIOB,6,OUTPUT,PUSH,HIGH,UP,SyS);	//SCL
+		gpio_config(GPIOB,7,OUTPUT,PUSH,HIGH,UP,SyS);	//SDA
 
-		write_gpio_io(GPIOB,6,1);
-		write_gpio_io(GPIOB,7,1);
+		for(uint8_t i=0; i<9; i++){
+			write_gpio_io(GPIOB,6,0);
+			for(uint8_t i=0; i<100; i++);
+			write_gpio_io(GPIOB,6,1);
+			for(uint8_t i=0; i<100; i++);
+		}
+
+		write_gpio_io(GPIOB, 7, 0);
+		write_gpio_io(GPIOB, 6, 1);
+		write_gpio_io(GPIOB, 7, 1);
 
 		reset_gpio_config(GPIOB,6);
 		reset_gpio_config(GPIOB,7);
 	}
 	else if(I2Cxn == I2C2){
-		gpio_config(GPIOB,6,OUTPUT,PUSH,HIGH,UP,SyS);
-		gpio_config(GPIOB,7,OUTPUT,PUSH,HIGH,UP,SyS);
+		gpio_config(GPIOB,10,OUTPUT,PUSH,HIGH,UP,SyS);	//SCL
+		gpio_config(GPIOB,11,OUTPUT,PUSH,HIGH,UP,SyS);	//SDA
 
-		write_gpio_io(GPIOB,6,1);
-		write_gpio_io(GPIOB,7,1);
+		for(uint8_t i=0; i<9; i++){
+			write_gpio_io(GPIOB,10,0);
+			for(uint16_t i=0; i<1000; i++);
+			write_gpio_io(GPIOB,10,1);
+			for(uint16_t i=0; i<1000; i++);
+		}
 
-		reset_gpio_config(GPIOB,6);
-		reset_gpio_config(GPIOB,7);
+		write_gpio_io(GPIOB, 11, 0);
+		write_gpio_io(GPIOB, 10, 1);
+		write_gpio_io(GPIOB, 11, 1);
+
+		reset_gpio_config(GPIOB,10);
+		reset_gpio_config(GPIOB,11);
+	}
+	else if(I2Cxn == I2C3){
+		gpio_config(GPIOB,8,OUTPUT,PUSH,HIGH,UP,SyS);	//SCL
+		gpio_config(GPIOB,9,OUTPUT,PUSH,HIGH,UP,SyS);	//SDA
+
+		for(uint8_t i=0; i<9; i++){
+			write_gpio_io(GPIOB,9,0);
+			for(uint16_t i=0; i<1000; i++);
+			write_gpio_io(GPIOB,9,1);
+			for(uint16_t i=0; i<1000; i++);
+		}
+
+		write_gpio_io(GPIOB, 9, 0);
+		write_gpio_io(GPIOB, 8, 1);
+		write_gpio_io(GPIOB, 9, 1);
+
+		reset_gpio_config(GPIOB,8);
+		reset_gpio_config(GPIOB,9);
 	}
 }
 

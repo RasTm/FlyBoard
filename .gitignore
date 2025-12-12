@@ -8,6 +8,5 @@
 out/
 Libraries/
 src/*.s
-src/*.h
 src/*.c
 *.gitignore
