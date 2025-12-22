@@ -59,35 +59,40 @@ int main(void){
 	ADC_Base::ADC_scan_enable(ADC1);
 	ADC_Base::ADC_continuous_enable(ADC1);
 
-	USART_Base Telemetry(USART_6,57600);
+	USART_Base Serial(USART_1, 115200);
+	USART_Base Telemetry(USART_6, 57600);
 
-	Telemetry.USART_Transmit(motivation);
+	Serial.USART_Transmit(motivation);
 	delay(1000);
-	Telemetry.USART_Transmit(clear_disp);
-	Telemetry.USART_Transmit(project_header);
-	Telemetry.USART_Transmit("MPU6050 Starting");
-	MPU6050 mpu(I2C1,MPU6050_FS_SEL1,MPU6050_FS_SEL1);
+	Serial.USART_Transmit(clear_disp);
+	Serial.USART_Transmit(project_header);
+
+	Serial.USART_Transmit("MPU6050 Starting");
+	MPU6050 mpu(I2C1, STANDARD, MPU6050_FS_SEL1, MPU6050_FS_SEL1);
  	mpu.config();
-	Telemetry.USART_Transmit("\n\rCalibrating...");
+	Serial.USART_Transmit("\n\rCalibrating...");
 	mpu.calc_IMU_error();
 	mpu.gyro_constant = (float)(1.0/250.0/mpu.gyro_fs_val);                  //250 Hz Refresh rate
-	Telemetry.USART_Transmit("\033[2K\rCalibration Done Gyro Constant = ");
-	Telemetry.USART_Transmit_float(mpu.gyro_constant,8);
+	Serial.USART_Transmit("\033[2K\rCalibration Done Gyro Constant = ");
+	Serial.USART_Transmit_float(mpu.gyro_constant,8);
 	delay(500);
-	Telemetry.USART_Transmit(clear_disp);
+	Serial.USART_Transmit(clear_disp);
 
-	Telemetry.USART_Transmit("MS5611 Starting\n");
+	Serial.USART_Transmit("MS5611 Starting\n");
 	MS5611 ms5611(I2C1);
 	ms5611.get_coefficent();
-	Telemetry.USART_Transmit(clear_line);
+	Serial.USART_Transmit(clear_line);
+	Serial.USART_Transmit("MS5611 Done\n");
+	delay(1000);
+	Serial.USART_Transmit(clear_line);
 
-	Telemetry.USART_Transmit("HMC5883L Starting");
-	HMC5883 hmc(I2C1);
-	hmc.config();
-	delay(50);
-	Telemetry.USART_Transmit(clear_line);
+//	Serial.USART_Transmit("HMC5883L Starting");
+//	HMC5883 hmc(I2C1);
+//	hmc.config();
+//	delay(50);
+//	Serial.USART_Transmit(clear_line);
 
-	Telemetry.USART_Transmit("Roll\tPitch\tAltitude\tPreassure\tTemp\tVolt\tAmper\n\r");
+	Serial.USART_Transmit("Roll\tPitch\tAltitude\tPreassure\tTemp\tVolt\tAmper\n\r");
 
 	interrupt_init();
 	ADC_Base::ADC_start(ADC1);
@@ -140,10 +145,10 @@ int main(void){
 			ms5611.calculate_absolute_val(data,altitude);
 		}
 
-	    if(program_buffer[read_index] == HMC5883_FLAG){
-			hmc_Hz_counter++;
-			hmc.mag_conv(heading_degree);
-		}
+//	    if(program_buffer[read_index] == HMC5883_FLAG){
+//			hmc_Hz_counter++;
+//			hmc.mag_conv(heading_degree);
+//		}
 
 		if(adc_read_able){
 			if(local_adc[0] > 520){
@@ -154,41 +159,41 @@ int main(void){
 		}
 
 		if(read_index % 2 ==0){
-			Telemetry.Transmit(final_roll);
-			Telemetry.USART_Transmit("\t");
-			Telemetry.Transmit(final_pitch);
-			Telemetry.USART_Transmit("\t");
-			Telemetry.Transmit(altitude);
-			Telemetry.USART_Transmit("\t");
-			Telemetry.Transmit(data[0]);
-			Telemetry.USART_Transmit("\t");
-			Telemetry.Transmit(data[1]);
-			Telemetry.USART_Transmit("\t");
-//			Telemetry.Transmit(heading_degree);
-//			Telemetry.USART_Transmit("\t");
-//			Telemetry.Transmit(hmc_Hz);
-//			Telemetry.USART_Transmit("\t");
-			Telemetry.Transmit(adc[0]);
-			Telemetry.USART_Transmit("\t");
-			Telemetry.Transmit(adc[1]);
-//			Telemetry.USART_Transmit("\t");
-//			Telemetry.Transmit(remote_ppm.channelX[2]);
-//			Telemetry.USART_Transmit("\t");
-//			Telemetry.Transmit(remote_ppm.channelX[3]);
-//			Telemetry.USART_Transmit("\t");
-//			Telemetry.Transmit(remote_ppm.channelX[4]);
-//			Telemetry.USART_Transmit("\t");
-//			Telemetry.Transmit(remote_ppm.channelX[5]);
-//			Telemetry.USART_Transmit("\t");
-//			Telemetry.Transmit(remote_ppm.channelX[6]);
-//			Telemetry.USART_Transmit("\t");
-//			Telemetry.Transmit(remote_ppm.channelX[7]);
-			Telemetry.USART_Transmit("\n\r");
+			Serial.Transmit(final_roll);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(final_pitch);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(altitude);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(data[0]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(data[1]);
+			Serial.USART_Transmit("\t");
+//			Serial.Transmit(heading_degree);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(hmc_Hz);
+//			Serial.USART_Transmit("\t");
+			Serial.Transmit(adc[0]);
+			Serial.USART_Transmit("\t");
+			Serial.Transmit(adc[1]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[2]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[3]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[4]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[5]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[6]);
+//			Serial.USART_Transmit("\t");
+//			Serial.Transmit(remote_ppm.channelX[7]);
+			Serial.USART_Transmit("\n\r");
 /*
 			sayac2++;
 			if(sayac2 == 5){
 				sayac2 = 0;
-				Telemetry.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row begining erase everything below
+				Serial.USART_Transmit("\033[5A\r\033[0J"); //5 row up, go row begining erase everything below
 			}*/
 		}
 	}

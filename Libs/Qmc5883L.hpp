@@ -59,7 +59,7 @@ class QMC5883 : public I2C_Base{
 	public:
 	uint8_t data_reg, gain_val;
 
-	QMC5883(I2C_TypeDef* I2Cxn, uint8_t average_sample = MA_1, uint8_t data_rate = DO_3, uint8_t gain = GN_0) :I2C_Base(I2Cxn,STANDART){
+	QMC5883(I2C_TypeDef* I2Cxn, uint8_t average_sample = MA_1, uint8_t data_rate = DO_3, uint8_t gain = GN_0) :I2C_Base(I2Cxn,STANDARD){
 		 if(gain == GN_0){ gain_val = 2; data_reg = gain + data_rate + average_sample;}
     else if(gain == GN_1){ gain_val = 8; data_reg = gain + data_rate + average_sample;}
 	}

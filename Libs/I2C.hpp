@@ -3,11 +3,11 @@
 #include "GPIO.hpp"
 #include <vector>
 
-#define STANDART 0
-#define FAST     1<<15
+#define STANDARD 0
+#define FAST     1
 
 #define DUTY_0   0
-#define DUTY_1   1<<14
+#define DUTY_1   1
 
 class I2C_Base{
 	private:
@@ -16,7 +16,7 @@ class I2C_Base{
 
 	public:
 	I2C_TypeDef* I2Cx;
-	I2C_Base(I2C_TypeDef *I2Cxn, uint8_t i2c_mode = FAST){
+	I2C_Base(I2C_TypeDef *I2Cxn, uint8_t i2c_mode = STANDARD){
 		if(I2Cxn == I2C1){
 			RCC-> APB1ENR |= 0x00200000;                            //I2C_1 Clock Enable
 			I2Cx = ((I2C_TypeDef *) I2C1_BASE);
@@ -98,13 +98,13 @@ class I2C_Base{
 		 * CCR = 4
 		 */
 
-		if(i2c_mode == STANDART){
-			I2Cx-> CCR 	 = 210 + STANDART;
+		if(i2c_mode == STANDARD){
+			I2Cx-> CCR 	 = 210 + STANDARD;
 			I2Cx-> TRISE = 43;
 		}
-		else if(i2c_mode==FAST){
-//			I2Cx-> CCR   = 35 + FAST + DUTY_0;
-			I2Cx-> CCR   = 4  + FAST + DUTY_1;
+		else if(i2c_mode == FAST){
+			I2Cx-> CCR   = 35 + FAST + DUTY_0;
+//			I2Cx-> CCR   = 4  + (FAST<<15) + (DUTY_1<<14);
 			I2Cx-> TRISE = 13;
 		}
 

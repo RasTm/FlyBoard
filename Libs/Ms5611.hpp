@@ -40,7 +40,7 @@ class MS5611:public I2C_Base{
 	uint8_t counter = 0;
 	bool conv_complete = false;
 
-	MS5611(I2C_TypeDef *I2Cxn, uint8_t ms_d1_select = MS_CONV_D1_4096, uint8_t ms_d2_select = MS_CONV_D2_4096) :I2C_Base(I2Cxn,STANDART){
+	MS5611(I2C_TypeDef *I2Cxn, uint8_t i2c_speed = STANDARD, uint8_t ms_d1_select = MS_CONV_D1_4096, uint8_t ms_d2_select = MS_CONV_D2_4096) :I2C_Base(I2Cxn, i2c_speed){
 		d1_selection = ms_d1_select;
 		d2_selection = ms_d2_select;
 	}

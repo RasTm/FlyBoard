@@ -137,7 +137,7 @@ class MPU6050 : public I2C_Base{
 	float gyro_fs_val = 0.0, accel_fs_val = 0.0, gyro_constant = 0.0;
 	bool set_gyro_angles = false;
 
-	MPU6050(I2C_TypeDef* I2Cxn, uint8_t gyro_fs_select = MPU6050_FS_SEL0, uint8_t accel_fs_select = MPU6050_FS_SEL0) :I2C_Base(I2Cxn,STANDART){
+	MPU6050(I2C_TypeDef* I2Cxn, uint8_t i2c_speed = STANDARD, uint8_t gyro_fs_select = MPU6050_FS_SEL0, uint8_t accel_fs_select = MPU6050_FS_SEL0) :I2C_Base(I2Cxn, i2c_speed){
 
 		if	   (gyro_fs_select == MPU6050_FS_SEL0) gyro_fs_val = GYRO_FS_SEL_250;
 		else if(gyro_fs_select == MPU6050_FS_SEL1) gyro_fs_val = GYRO_FS_SEL_500;

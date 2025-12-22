@@ -47,14 +47,20 @@ void gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin, uint8_t Mode, uint8_t OTy
  * @retval -
  */
 void reset_gpio_config(GPIO_TypeDef *Gpio_Port, uint8_t Pin){
-	Gpio_Port-> MODER   &= (0<<Pin*2);
-	Gpio_Port-> OTYPER  &= (0<<Pin);
-	Gpio_Port-> OSPEEDR &= (0<<Pin*2);
-	Gpio_Port-> PUPDR   &= (0<<Pin*2);
-	Gpio_Port-> BSRRH   &= (1<<Pin);
+	Gpio_Port-> MODER   &= ~(3<<Pin*2);
+	Gpio_Port-> OTYPER  &= ~(1<<Pin);
+	Gpio_Port-> OSPEEDR &= ~(3<<Pin*2);
+	Gpio_Port-> PUPDR   &= ~(3<<Pin*2);
+	Gpio_Port-> BSRRH   |= (1<<Pin);
 
-	if(Pin>7){Gpio_Port-> AFR[1] |= (SyS<<((Pin-8)*4));}
-	else{Gpio_Port-> AFR[0] |= (SyS<<(Pin*4));}
+	if(Pin>7){
+		Gpio_Port-> AFR[1] &= ~(0xF<<((Pin-8)*4));
+		Gpio_Port-> AFR[1] |= (SyS<<((Pin-8)*4));
+	}
+	else{
+		Gpio_Port-> AFR[0] &= ~(0xF<<(Pin*4));
+		Gpio_Port-> AFR[0] |= (SyS<<(Pin*4));
+	}
 }
 
 /**

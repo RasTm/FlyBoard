@@ -69,7 +69,7 @@ class HMC5883 : public I2C_Base{
 //	uint8_t  data_rate_val;
 	float gain_val;
 
-	HMC5883(I2C_TypeDef* I2Cxn, uint8_t average_sample = MA_1, uint8_t data_rate = DO_4, uint8_t gain = GN_1) :I2C_Base(I2Cxn,STANDART){
+	HMC5883(I2C_TypeDef* I2Cxn, uint8_t i2c_speed = STANDARD ,uint8_t average_sample = MA_1, uint8_t data_rate = DO_4, uint8_t gain = GN_1) :I2C_Base(I2Cxn, i2c_speed){
 		if(gain == GN_0){ gain_val = 0.88; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
    else if(gain == GN_1){ gain_val = 1.30; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}
    else if(gain == GN_2){ gain_val = 1.90; gain_reg = gain; data_rate_reg = data_rate; avg_samp_reg = average_sample;}

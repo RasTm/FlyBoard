@@ -4,7 +4,7 @@
 
 class LCD : public I2C_Base{
 	public:
-	LCD(I2C_TypeDef *I2Cxn):I2C_Base(I2Cxn, STANDART){}
+	LCD(I2C_TypeDef *I2Cxn):I2C_Base(I2Cxn, STANDARD){}
 
 	void lcd_init();
 	void lcd_send_cmd(char cmd);
