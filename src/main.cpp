@@ -17,7 +17,7 @@ void Program_timer(){
 void PPM_read_timer(){
 	RCC-> APB1ENR  |= 0x00000080;             //Timer13 Clock Enable
 	TIM13-> PSC     = 83;                     //Tout = ((PSC+1)*(ARR+1))/Tim_clk) -> Tim_clk = 84Mhz
-	TIM13-> ARR     = 40000;                  //Tout = 40ms For Ppm Failsafe (2 frame)
+	TIM13-> ARR     = 39999;                  //Tout = 40ms For Ppm Failsafe (2 frame)
 	TIM13-> DIER   |= 0x0001;                 //Timer13 Updade Interrupt Enable
 	TIM13-> CR1    |= 0x0001;                 //Timer13 Counter Start
 	gpio_config(GPIOE,11,INPUT,PUSH,LOW,UP,SyS);   //GPIOE 11 Configure
@@ -253,7 +253,7 @@ extern "C" { void TIM8_TRG_COM_TIM14_IRQHandler(void){
 extern "C" { void EXTI15_10_IRQHandler(void) {
 	remote_ppm.current_time = TIM13-> CNT;
 
-	if(!remote_ppm.first_valid_edge){
+	if(!remote_ppm.first_valid_edge){						//First valid edge check if true go out from function
 		remote_ppm.last_time = remote_ppm.current_time;
 		remote_ppm.first_valid_edge = true;
 		Clr_Ext_Interrupt_PD(11);
@@ -262,18 +262,18 @@ extern "C" { void EXTI15_10_IRQHandler(void) {
 	}
 
     remote_ppm.current_time = TIM13->CNT;
-	remote_ppm.delta = remote_ppm.current_time - remote_ppm.last_time;
+	remote_ppm.delta = (uint16_t) remote_ppm.current_time - remote_ppm.last_time;
 	remote_ppm.last_time = remote_ppm.current_time;
 
-	if(!remote_ppm.dead_space_seen) {
-		if(remote_ppm.delta > 4000){ // Sync boþluðu tespiti
+	if(!remote_ppm.dead_space_seen) {						//Sync space check if true return pointer to begining
+		if(remote_ppm.delta > 4000){
 			remote_ppm.dead_space_seen = true;
 			remote_ppm.i = 0;
 		}
 	}
 	else{
 		if(remote_ppm.i < 8){
-			remote_ppm.channelX[remote_ppm.i] = remote_ppm.delta-2;  // - 2 is for calibration
+			remote_ppm.channelX[remote_ppm.i] = remote_ppm.delta - 2;  // - 2 is for calibration
 			remote_ppm.i += 1;
 		}
 		if(remote_ppm.i == 8){

@@ -60,6 +60,8 @@ void Clock_init(){
 	SysTick-> LOAD = 0;
 	SysTick-> LOAD = 167999;		//Systick Load is 167,999 (168 Million Pulse each second/ 167,999 pulse = 1 millisecond)
 
+	SCB-> SHP[2]  |= 0xF000000000;	//Systick Setted 15 (least) priority
+
 	SysTick-> CTRL|= 0x00000007;	//Systick Clock Source AHB(Processor Clock)
 }
 
