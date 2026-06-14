@@ -1,3 +1,4 @@
+
 *.settings
 *.code_review_properties
 *.cproject
@@ -6,7 +7,6 @@
 *stm32f4_flash.ld
 *probe_proxy0.log
 out/
-Libraries/
 src/*.s
 src/*.c
 *.gitignore
