@@ -10,3 +10,4 @@ out/
 src/*.s
 src/*.c
 *.gitignore
+PCB/.history

@@ -1,0 +1,19 @@
+uçuş kontrol kartlı uçak yapmak için notlar
+
+1- elimizde eski uçaktan sökülen 750kv motor + 60A esc mevcut büyük uçak yapılabilir
+2- balsa ve karbon işleyemeyiz ayrıca çok pahalı uçak köpük olmalı
+3- uçak pusher tercih edilmeli, twinboom olabilir. bu sayede büyük 
+   pervane montajları yapılabilir. 
+4- 
+4- uçuş kontrol kartında gps gibi ekstra fonksiyonlar olmamalı. 
+
+uçak için notlar
+
+1- uçağın ölçüleri ve tipi belirlendi skyhunter
+2- uçağın kanadının malzemesi epp veya katlama fotoblok olacak
+3- kanat ve kuyruk aparatlarının yerleştirilmesi için tahta veya plastik kütük
+
+2.1- kanadı köpükten yaparsak epp köpüğü kesmek için sıcak telli kesim aleti yapmamız 
+     gerek.
+2.2- kanadı kesebilmek için naca 4412 ve naca 0009 profillerini kontraplaktan kesip 
+     çıkarmamız gerek.
